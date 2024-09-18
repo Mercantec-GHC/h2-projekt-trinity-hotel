@@ -84,20 +84,7 @@ namespace API.Controllers
             return Ok(bookings);
         }
 
-        [HttpGet("emails/{GuestEmail}")]
-        public async Task<ActionResult<List<Booking>>> GetBookingsByGuestEmail(string GuestEmail)
-        {
-            var bookings = await _hotelContext.Bookings
-                .Where(b => b.GuestEmail == GuestEmail)
-                .Include(b => b.Room)
-                .ToListAsync();
-            if (bookings == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(bookings);
-        }
+        
 
         [HttpGet("phone/{GuestPhoneNr}")]
         public async Task<ActionResult<Booking>> GetBookingByGuestPhoneNr(string GuestPhoneNr)
