@@ -1,46 +1,84 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using DomainModels;
 using API.Data;
-using API.Services;
 using Microsoft.EntityFrameworkCore;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Security.Claims;
+using System.Text;
+using Microsoft.CodeAnalysis.Scripting;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.IdentityModel.Tokens;
 
 namespace API.Controllers
 {
 	[ApiController]
-	[Route("[controller]")]
+	[Route("api/[controller]")]
 	public class UsersController : ControllerBase
 	{
 		private readonly HotelContext _hotelContext;
-		private readonly UserMapping _userMapping;
-		public UsersController(HotelContext hotelContext, UserMapping userMapping)
+        private readonly IConfiguration _configuration;
+        public UsersController(HotelContext hotelContext, IConfiguration configuration)
 		{
 			_hotelContext = hotelContext;
-			_userMapping = userMapping;
-		}
+            _configuration = configuration;
+        }
 
-		// Get all users.
-		[HttpGet]
-		public async Task<ActionResult<IEnumerable<UserGetDTO>>> GetAllUsers()
-		{
-			var users = await _hotelContext.Users.ToListAsync();
-			List<UserGetDTO> result = new List<UserGetDTO>();
+        [HttpPost("register")]
+        public async Task<IActionResult> Register(RegisterDto registerDto)
+        {
+            if (await _hotelContext.Users.AnyAsync(p => p.Email == registerDto.Email))
+            {
+                return BadRequest("Email already exists");
+            }
 
-			if (users == null)
-			{
-				return NotFound();
-			}
-			/* Loops through each item in the List and maps it to a new class/type 
-			 and adds it to a new List.*/
-			foreach (var user in users)
-			{
-				result.Add(_userMapping.MapUserToUserGetDTO(user));
-			}
-			return Ok(result);
-		}
+            var user = new User
+            {
+                FullName = registerDto.FullName,
+                Email = registerDto.Email,
+                Password = BCrypt.Net.BCrypt.HashPassword(registerDto.Password),
+                PhoneNr = registerDto.PhoneNr
+            };
 
-		// Get a specific user from the UserID.
-		[HttpGet("{id}")]
-		public async Task<ActionResult<UserGetDTO>> GetAUserById(int id)
+            _hotelContext.Users.Add(user);
+            await _hotelContext.SaveChangesAsync();
+
+            return Ok("Registration successful");
+        }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login(LoginDto loginDto)
+        {
+            var user = await _hotelContext.Users.FirstOrDefaultAsync(p => p.Email == loginDto.Email);
+
+            if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.Password))
+            {
+                return Unauthorized("Invalid email or password");
+            }
+
+            var token = GenerateJwtToken(user);
+
+            return Ok(new { Token = token, UserId = user.UserId, IsAdmin = user.Administrator });
+        }
+
+        // Get all users.
+        [HttpGet("all")]
+        // [Authorize(Roles = "Administrator")] // Temporarily comment this out for testing
+        public async Task<ActionResult<IEnumerable<User>>> GetAllProfiles()
+        {
+            try
+            {
+                return await _hotelContext.Users.ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                // Log the exception
+                return StatusCode(500, "An error occurred while fetching users");
+            }
+        }
+
+        // Get a specific user from the UserID.
+        [HttpGet("{id}")]
+		public async Task<ActionResult<User>> GetAUserById(int id)
 		{
 			// Finds a user through the user id.
 			var user = await _hotelContext.Users.FindAsync(id);
@@ -49,83 +87,128 @@ namespace API.Controllers
 			{
 				return NotFound();
 			}
-			// returns the user, after mapping it to a new class/type.
-			return Ok(_userMapping.MapUserToUserGetDTO(user));
-		}
 
-		// Get User info to login
-		[HttpPost("/login")]
-		public async Task<ActionResult<UserLoginDTO>> Login(string email, string password)
-		{
-			var user = await _hotelContext.Users.Where(e => e.Email == email).FirstOrDefaultAsync(p => p.Password == password);
-
-			if (user == null)
-			{
-				return NotFound();
-			}
-			return Ok(_userMapping.MapUserToUserLoginDTO(user));
+            return user;
         }
 
-		// Create a user account
-		[HttpPost]
-		public async Task<ActionResult<User>> PostAUser(UserPostDTO user)
-		{
-			try
-			{
-				// Adds the user to database after mapping it to a new class/type.
-				_hotelContext.Users.Add(_userMapping.MapUserPostDTOToUser(user));
-				// Saves the changes to the database.
-				await _hotelContext.SaveChangesAsync();
+        private string GenerateJwtToken(User user)
+        {
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, user.Administrator ? "Administrator" : "User")
+            };
 
-				return Ok();
-			}
-			catch
-			{
-				return NotFound();
-			}
-		}
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-		// Update a specific guest user account.
-		[HttpPut("{id}")]
-		public async Task<IActionResult> PutUser(int id, UserPutDTO user)
-		{
-			// Finds the user by its user id.
-			var userDTO = await _hotelContext.Users.FindAsync(id);
+            var token = new JwtSecurityToken(
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.Now.AddDays(1),
+                signingCredentials: creds);
 
-			if (userDTO == null)
-			{
-				return NotFound();
-			}
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
 
-			// Update the value stored in the variables.
-			userDTO.FullName = user.FullName ?? throw new ArgumentException(nameof(user.FullName));
-			userDTO.Password = user.Password ?? throw new ArgumentException(nameof(user.Password));
-			userDTO.PhoneNr = user.PhoneNr ?? throw new ArgumentException(nameof(user.PhoneNr));
-			userDTO.Email = user.Email ?? throw new ArgumentException(nameof(user.Email));
 
-			// Mark the userDTO entity as modified in the change tracker.
-			_hotelContext.Entry(userDTO).State = EntityState.Modified;
+        // Update a specific guest user account.
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateUser(int id, [FromBody] User updatedUser)
+        {
+            if (id != updatedUser.UserId)
+            {
+                return BadRequest();
+            }
 
-			// Try to save changes.
-			try
-			{
-				await _hotelContext.SaveChangesAsync();
-			}
-			catch
-			{
-				// Checks if the user is in the database.
-				if (!_hotelContext.Users.Any(u => u.UserId == id)){
-					return NotFound();
-				}
-				else{
-					throw;
-				}
-			}
-			return StatusCode(200);
-		}
+            var user = await _hotelContext.Users.FindAsync(id);
+            if (user == null)
+            {
+                return NotFound();
+            }
 
-		// Delete a User.
-		[HttpDelete("{id}")]
+            user.FullName = updatedUser.FullName;
+            user.Email = updatedUser.Email;
+            user.PhoneNr = updatedUser.PhoneNr;
+
+            try
+            {
+                await _hotelContext.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!UserExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
+        }
+
+        private bool UserExists(int id)
+        {
+            // Gå igennem alle profiler i databasen og tjek, om der findes en med det givne id
+            foreach (var user in _hotelContext.Users)
+            {
+                if (user.UserId == id)
+                {
+                    return true; // Profilen findes
+                }
+            }
+            return false; // Profilen findes ikke
+        }
+
+        [HttpPut("admin/{id}")]
+        //[Authorize(Roles = "Administrator")]
+        public async Task<IActionResult> AdminUpdateUser(int id, [FromBody] User updatedUser)
+        {
+            try
+            {
+                if (id != updatedUser.UserId)
+                {
+                    return BadRequest("ID mismatch");
+                }
+
+                var user = await _hotelContext.Users.FindAsync(id);
+                if (user == null)
+                {
+                    return NotFound($"User with ID {id} not found");
+                }
+
+                user.FullName = updatedUser.FullName;
+                user.Email = updatedUser.Email;
+                user.PhoneNr = updatedUser.PhoneNr;
+                user.Administrator = updatedUser.Administrator;
+
+                await _hotelContext.SaveChangesAsync();
+                return Ok("User updated successfully");
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!UserExists(id))
+                {
+                    return NotFound($"User with ID {id} no longer exists");
+                }
+                else
+                {
+                    return StatusCode(500, "A concurrency error occurred while updating the user");
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An error occurred while updating the user: {ex.Message}");
+            }
+        }
+
+        // Delete a User.
+        [HttpDelete("{id}")]
 		public async Task<IActionResult> UserDelete(int id)
 		{
 			// Find user by user id.
@@ -142,34 +225,6 @@ namespace API.Controllers
 			await _hotelContext.SaveChangesAsync();
 			return StatusCode(200);
 		}
-
-
-		// Loggin in a user. returns loggedin userdata
-        [HttpPost("Login")]
-        public async Task<ActionResult<UserGetDTO>> LoginUser(string email, string password)
-        {
-            try
-            {
-                // Fetch the user from the database asynchronously by matching email and password
-                User user = await _hotelContext.Users.FirstOrDefaultAsync(u=>u.Email == email && u.Password == password);
-
-                // Check if the user exists, if not return a 404 Not Found response
-                if (user == null)
-                {
-                    return NotFound();
-                }
-
-                // Map the User entity to a UserGetDTO object using a mapping function
-                // This ensures only required data is sent back, not sensitive information like passwords
-                UserGetDTO loggedin = _userMapping.MapUserToUserGetDTO(user);
-
-                // Return the mapped DTO object wrapped in a 200 OK response
-                return Ok(loggedin);
-            }
-            catch
-            {
-                return NotFound();
-            }
-        }
     }
 }
+

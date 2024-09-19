@@ -1,17 +1,28 @@
-﻿@using DomainModels
+﻿@page "/room-details"
+@using DomainModels
 @using System.Globalization
 @using System.Diagnostics
+@attribute [Authorize]
+@using Microsoft.AspNetCore.Authorization
+@inject HttpClient Http
+@inject NavigationManager navManager
+@using Microsoft.JSInterop
+@inject IJSRuntime jsRuntime
+@inject AppState AppState
 
-@using Blazorise;
-@using Blazorise.Bootstrap5;
-@inject Services.DatabaseServices DatabaseServicesInstance
 
-@page "/room-details"
 
 <h1>Room Details</h1>
 
-<h3>Standart Room</h3>
 
+@if (rooms == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+
+<h3>Standart Room</h3>
 <p>
     Welcome to our cozy and well-appointed rooms designed to make your stay comfortable and enjoyable.
     Whether you choose a single or double room, each space is equipped with modern amenities to suit your needs.
@@ -156,12 +167,12 @@
    
 </p>
 
+}
+
 
 
 @code {
-    private string selectedSlide = "0"; 
-    
-
+    private List<Room> rooms;  // Holds room data from the API
     private int PriseSingleStandart = 0;
     private int PriseDoubleStandart = 0;
     private int PriseSinglePremium = 0;
@@ -169,36 +180,58 @@
     private int PrisePenthouse = 0;
     private string Curency = "DKK";
 
-
     protected override async Task OnInitializedAsync()
     {
-        await GetAllRoomsTypes();
+        await GetAllRoomTypes();
     }
 
-    async Task GetAllRoomsTypes()
+    async Task GetAllRoomTypes()
     {
-        var rooms = await DatabaseServicesInstance.GetAllRoomsTypes();
-
-        foreach (var room in rooms)
+        try
         {
-            switch (room.Type)
+            // Fetch room data from API
+            rooms = await Http.GetFromJsonAsync<List<Room>>("api/Rooms");
+
+            // Map room prices based on the room type
+            foreach (var room in rooms)
             {
-                case "standard single":
-                    PriseSingleStandart = room.Price;
-                    break;
-                case "standard double":
-                    PriseDoubleStandart = room.Price;
-                    break;
-                case "premium single":
-                    PriseSinglePremium = room.Price;
-                    break;
-                case "premium double":
-                    PriseDoublePremium = room.Price;
-                    break;
-                case "penthouse":
-                    PrisePenthouse = room.Price;
-                    break;
+                switch (GetRoomTypeString(room.Type))
+                {
+                    case "standard single":
+                        PriseSingleStandart = room.Price;
+                        break;
+                    case "standard double":
+                        PriseDoubleStandart = room.Price;
+                        break;
+                    case "premium single":
+                        PriseSinglePremium = room.Price;
+                        break;
+                    case "premium double":
+                        PriseDoublePremium = room.Price;
+                        break;
+                    case "penthouse":
+                        PrisePenthouse = room.Price;
+                        break;
+                }
             }
         }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error fetching room data: {ex.Message}");
+        }
+    }
+
+    // Helper function to map room type from int to string
+    private string GetRoomTypeString(int type)
+    {
+        return type switch
+        {
+            1 => "standard single",
+            2 => "standard double",
+            3 => "premium single",
+            4 => "premium double",
+            5 => "penthouse",
+            _ => "unknown"
+        };
     }
 }

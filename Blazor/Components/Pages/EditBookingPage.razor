@@ -1,9 +1,9 @@
-﻿@using DomainModels
+﻿@page "/editbooking/{BookingId:int}"
+@using DomainModels
 @using System.Globalization
-@inject Services.DatabaseServices DatabaseServicesInstance
+@inject HttpClient HttpClient
 @inject NavigationManager NavManager
 
-@page "/editbooking/{BookingId:int}"
 
 <h3>Edit Booking</h3>
 
@@ -25,11 +25,11 @@ else
 {
     <div class="form-group">
         <label for="guestName">Guest Name</label>
-        <input id="guestName" class="form-control" @bind="@booking.GuestName" />
+        <input id="guestName" class="form-control" @bind="@booking.FullName" />
     </div>
     <div class="form-group">
         <label for="guestEmail">Guest Email</label>
-        <input id="guestEmail" class="form-control" @bind="@booking.GuestEmail" />
+        <input id="guestEmail" class="form-control" @bind="@booking.Email" />
     </div>
     <div class="form-group">
         <label for="startDate">Start Date</label>
@@ -44,6 +44,12 @@ else
 }
 
 @code {
+    [Parameter]
+    public int BookingId { get; set; }
+
+    private DomainModels.Booking booking = new();
+    private string successMessage = "";
+    private string errorMessage = "";
 
     // This method is called when the component is initialized
     protected override async Task OnInitializedAsync()
@@ -51,58 +57,70 @@ else
         await GetBooking();
     }
 
-    // Method to fetch the booking details from the database
-    async Task GetBooking()
-    {
-        booking = await DatabaseServicesInstance.GetBookingById(BookingId);
-        StateHasChanged();
-    }
-
-    [Parameter]
-    public int BookingId { get; set; }
-
-    DomainModels.Booking booking;
-    private string successMessage = "";
-    private string errorMessage = "";
-
-    // Method to save the changes made to the booking
-    async Task SaveChanges()
+    // Method to fetch the booking details from the API
+    private async Task GetBooking()
     {
         try
         {
-           
-            
-            // Call the UpdateBooking method from the DatabaseServices and show success message
-            await DatabaseServicesInstance.UpdateBooking(booking);
-            successMessage = "Booking updated successfully!";
-            errorMessage = "";
-            // to be sure that the page is updated
-            StateHasChanged();
+            booking = await HttpClient.GetFromJsonAsync<DomainModels.Booking>($"api/Bookings/id/{BookingId}");
+            if (booking == null)
+            {
+                errorMessage = "Booking not found.";
+            }
         }
         catch (Exception ex)
         {
+            errorMessage = $"Error fetching booking: {ex.Message}";
+        }
+    }
+
+
+    // Method to save the changes made to the booking
+    private async Task SaveChanges()
+    {
+        try
+        {
+            var response = await HttpClient.PutAsJsonAsync("api/Bookings/update", booking);
+
+            if (response.IsSuccessStatusCode)
+            {
+                successMessage = "Booking updated successfully!";
+                errorMessage = "";
+            }
+            else
+            {
+                errorMessage = "Failed to update booking.";
+                successMessage = "";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error updating booking: {ex.Message}";
             successMessage = "";
-            errorMessage = "Failed to update booking: " + ex.Message;
-            // to be sure that the page is updated
-            StateHasChanged();
         }
     }
 
     // Method to delete the booking
-    async Task Delete()
+    private async Task Delete()
     {
         try
         {
-            
-            await DatabaseServicesInstance.DeleteBooking(booking.BookingId);
-            successMessage = "Booking deleted successfully!";
-            errorMessage = "";
-            NavManager.NavigateTo("/upcomingbookings");
+            var response = await HttpClient.DeleteAsync($"api/Bookings/id/{BookingId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                successMessage = "Booking deleted successfully!";
+                errorMessage = "";
+                NavManager.NavigateTo("/upcomingbookings");
+            }
+            else
+            {
+                errorMessage = "Failed to delete booking.";
+            }
         }
         catch (Exception ex)
         {
-            successMessage = "";
-            errorMessage = "Failed to delete booking: " + ex.Message;
+            errorMessage = $"Error deleting booking: {ex.Message}";
         }
     }
 }

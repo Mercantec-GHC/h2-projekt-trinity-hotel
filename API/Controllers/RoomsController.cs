@@ -7,7 +7,7 @@ namespace API.Controllers
 {
 
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class RoomsController : ControllerBase
     {
         private readonly HotelContext _hotelContext;
@@ -85,19 +85,19 @@ namespace API.Controllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
+
         [HttpPost]
-        public async Task<IActionResult> PostRoom(RoomPostDTO roomDTO)
+        public async Task<IActionResult> PostRoom(Room room)
         {
             try
             {
-                //Creates a new room object from the DTO
-                var room = new Room()
+                var newroom = new Room()
                 {
-                    Type = roomDTO.Type,
-                    Price = roomDTO.Price
+                    Type = room.Type,
+                    Price = room.Price
                 };
                 //Adds the new room to the context and saves changes asynchronously
-                _hotelContext.Rooms.Add(room);
+                _hotelContext.Rooms.Add(newroom);
                 await _hotelContext.SaveChangesAsync();
 
                 return Ok(StatusCode(200));
@@ -109,64 +109,22 @@ namespace API.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutRoom(int id, RoomPutDTO room)
+        public async Task<IActionResult> PutRoom(int id, Room room)
         {
-            //Finds the existing rooms by its ID
-            var roomDTO = await _hotelContext.Rooms.FindAsync(id);
-
+            //Finds the existing room by its ID
+            var existingRoom = await _hotelContext.Rooms.FindAsync(id);
 
             // Returns a 404 Not Found if the room doesn't exist
-            if (roomDTO == null)
+            if (existingRoom == null)
             {
                 return NotFound();
             }
 
-            
             //Updates only the BookedDays property
-            roomDTO.BookedDays = room.BookedDays;
+            existingRoom.BookedDays = room.BookedDays;
 
             // Mark the room entity as modified in the context
-            _hotelContext.Entry(roomDTO).State = EntityState.Modified;
-
-            try
-            {
-                // Save the changes to the database asynchronously
-                await _hotelContext.SaveChangesAsync();
-            }
-            catch
-            {
-                //Checks if the room still exists before rethrowing the exception
-                if (!_hotelContext.Rooms.Any(r => r.RoomId == id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-            return StatusCode(200);
-        }
-
-        [HttpPut("{id}Admin")]
-        public async Task<IActionResult> PutRoomAdmin(int id, RoomPutAdmin room)
-        {
-            // Find the existing room by its ID
-            var roomDTO = await _hotelContext.Rooms.FindAsync(id);
-
-            // Return a 404 Not Found status if the room does not exist
-            if (roomDTO == null)
-            {
-                return NotFound();
-            }
-
-            //// Update multiple properties of the room, including Type, Price, and BookedDays
-            roomDTO.Type = room.Type;
-            roomDTO.Price = room.Price;
-            roomDTO.BookedDays = room.BookedDays;
-
-            // Mark the room entity as modified in the context
-            _hotelContext.Entry(roomDTO).State = EntityState.Modified;
+            _hotelContext.Entry(existingRoom).State = EntityState.Modified;
 
             try
             {

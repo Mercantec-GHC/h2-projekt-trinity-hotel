@@ -1,50 +1,104 @@
-﻿@page "/All-profiles"
+﻿@page "/admin-edit-profile/{UserId:int}"
+@using DomainModels
+@inject IHttpClientFactory HttpClientFactory
+@inject NavigationManager NavigationManager
+@inject AppState AppState
+@inject IJSRuntime JSRuntime
+@inject ILogger<AdminProfileController> Logger
 
-<PageTitle>Profile manager</PageTitle>
+<h3>Admin Edit Profile</h3>
 
-<h1>Profiles:</h1>
+@if (!AppState.LoggedIn || !AppState.IsAdmin)
+{
+    <p>You do not have permission to access this page.</p>
+}
+else if (user != null)
+{
+    <EditForm Model="@user" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
 
-<button class="btn btn-primary" @onclick="UpdateProfiles">Refresh list</button>
+        <div>
+            <label for="name">Name:</label>
+            <InputText id="name" @bind-Value="user.FullName" class="form-control" />
+        </div>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>User ID</th>
-            <th>Name</th>
-            <th>Role</th>
-            <th>Number of bookings</th>
-            <th>Delete</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (UserGetDTO profile in profiles)
-        {
-            <tr>
-                <td>@profile.UserId</td>
-                <td>@profile.FullName</td>
-                <td>@profile.Role</td>
-                <td>@profile.Bookings.Count()</td>
-                <td>
-                    <button class="btn btn-primary" @onclick="@(async () => await DeleteAccount(profile.UserId))">Delete</button>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+        <div>
+            <label for="email">Email:</label>
+            <InputText id="email" @bind-Value="user.Email" class="form-control" />
+        </div>
+
+        <div>
+            <label for="phone">Phone Number:</label>
+            <InputText id="phone" @bind-Value="user.PhoneNr" class="form-control" />
+        </div>
+
+        <div>
+            <label for="administrator">Administrator:</label>
+            <InputCheckbox id="administrator" @bind-Value="user.Administrator" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <button type="button" @onclick="Cancel" class="btn btn-secondary">Cancel</button>
+    </EditForm>
+}
+else
+{
+    <p>Loading...</p>
+}
 
 @code {
-    private List<UserGetDTO> profiles = new List<UserGetDTO>();
+    [Parameter]
+    public int UserId { get; set; }
 
-    private async Task UpdateProfiles()
+    private User? user;
+
+    protected override void OnInitialized()
     {
-        profiles = await DBServices.GetAllUsers();
-
-        profiles = profiles.OrderBy(p => p.UserId).ToList();
+        httpClient = HttpClientFactory.CreateClient("API");
     }
 
-    private async Task DeleteAccount(int userID)
+    private HttpClient httpClient;
+
+    protected override async Task OnInitializedAsync()
     {
-        await DBServices.DeleteUser(userID);
-        await UpdateProfiles();
+        if (!AppState.LoggedIn || !AppState.IsAdmin)
+        {
+            NavigationManager.NavigateTo("/");
+            return;
+        }
+
+        user = await httpClient.GetFromJsonAsync<User>($"api/Users/{UserId}");
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+
+            var response = await httpClient.PutAsJsonAsync($"api/Users/admin/{UserId}", user);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Profile updated successfully.");
+                NavigationManager.NavigateTo("/admin-profile-list");
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Logger.LogError($"Error updating profile. Status: {response.StatusCode}, Content: {errorContent}");
+                await JSRuntime.InvokeVoidAsync("alert", $"Error updating profile. Status: {response.StatusCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Exception occurred while updating profile");
+            await JSRuntime.InvokeVoidAsync("alert", $"An error occurred: {ex.Message}");
+        }
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/admin-profile-list");
     }
 }

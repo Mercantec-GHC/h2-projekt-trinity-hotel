@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace API.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class BookingsController : ControllerBase
     {
         private readonly HotelContext _hotelContext;
@@ -38,6 +38,7 @@ namespace API.Controllers
 
             return Ok(booking);
         }
+
 
         [HttpGet("name/{GuestName}")]
         public async Task<ActionResult<Booking>> GetBookingByGuestName(string GuestName)
@@ -105,39 +106,43 @@ namespace API.Controllers
         [HttpPost("add")]
 
         public ActionResult AddBooking(CreateBookingDTO bookingDTO)
+
+        [HttpPost("add")]
+        public ActionResult AddBooking(Booking booking)
+
         {
-            var room = _hotelContext.Rooms.Find(bookingDTO.RoomId);
+            var room = _hotelContext.Rooms.Find(booking.RoomId);
             // Data validation
             if (room == null)
             {
                 return NotFound("room not found");
             }
 
-            if (bookingDTO.StartDate >= bookingDTO.EndDate)
+            if (booking.StartDate >= booking.EndDate)
             {
                 return BadRequest("Invalid date range");
             }
 
-            if (bookingDTO.StartDate < DateTime.Now)
+            if (booking.StartDate < DateTime.Now)
             {
                 return BadRequest("Invalid date range");
             }
 
-            var booking = new Booking
+            var newbooking = new Booking
             {
                 Room = room,
-                GuestName = bookingDTO.GuestName,
-                GuestEmail = bookingDTO.GuestEmail,
-                GuestPhoneNr = bookingDTO.GuestPhoneNr,
-                StartDate = DateTime.SpecifyKind(bookingDTO.StartDate, DateTimeKind.Utc),
-                EndDate = DateTime.SpecifyKind(bookingDTO.EndDate, DateTimeKind.Utc)
+                FullName = booking.FullName,
+                Email = booking.Email,
+                PhoneNr = booking.PhoneNr,
+                StartDate = DateTime.SpecifyKind(booking.StartDate, DateTimeKind.Utc),
+                EndDate = DateTime.SpecifyKind(booking.EndDate, DateTimeKind.Utc)
             };
-            _hotelContext.Bookings.Add(booking);
+            _hotelContext.Bookings.Add(newbooking);
 
             //update room booked days.
             room.BookedDays.AddRange(Enumerable
-                .Range(0, (int)(bookingDTO.EndDate - bookingDTO.StartDate).TotalDays)
-                .Select(i => DateTime.SpecifyKind(bookingDTO.StartDate, DateTimeKind.Utc)
+                .Range(0, (int)(newbooking.EndDate - newbooking.StartDate).TotalDays)
+                .Select(i => DateTime.SpecifyKind(newbooking.StartDate, DateTimeKind.Utc)
                 .AddDays(i)));
 
             _hotelContext.SaveChanges();
@@ -158,8 +163,8 @@ namespace API.Controllers
                         existingBooking.Room.Type = booking.Room.Type;
                         existingBooking.StartDate = booking.StartDate;
                         existingBooking.EndDate = booking.EndDate;
-                        existingBooking.GuestEmail = booking.GuestEmail;
-                        existingBooking.GuestPhoneNr = booking.GuestPhoneNr;
+                        existingBooking.Email = booking.Email;
+                        existingBooking.PhoneNr = booking.PhoneNr;
 
                         _hotelContext.Update(existingBooking);
                     }
@@ -172,52 +177,49 @@ namespace API.Controllers
         [HttpPut("update")]
 
         [ProducesResponseType(204)]
-        public ActionResult UpdateBooking(UpdateBookingDTO bookingDTO)
+        public ActionResult UpdateBooking(Booking booking)
         {
-
-            if (bookingDTO.BookingId <= 0)
+            if (booking.BookingId <= 0)
             {
                 return BadRequest("Invalid booking id");
             }
 
-            var booking = _hotelContext.Bookings.Find(bookingDTO.BookingId);
-            if (booking == null)
+            var existingBooking = _hotelContext.Bookings.Find(booking.BookingId);
+            if (existingBooking == null)
             {
                 return NotFound("booking not found");
             }
 
-            var user = _hotelContext.Users.Find(bookingDTO.UserId);
+            var user = _hotelContext.Users.Find(booking.UserId);
             if (user == null)
             {
                 return NotFound("user not found");
             }
 
-            var room = _hotelContext.Rooms.Find(bookingDTO.RoomId);
-
-
+            var room = _hotelContext.Rooms.Find(booking.RoomId);
             if (room == null)
             {
                 return NotFound("room not found");
             }
 
-            if (bookingDTO.StartDate >= bookingDTO.EndDate)
+            if (booking.StartDate >= booking.EndDate)
             {
                 return BadRequest("Invalid date range");
             }
 
-            if (bookingDTO.StartDate < DateTime.Now)
+            if (booking.StartDate < DateTime.Now)
             {
                 return BadRequest("Invalid date range");
             }
 
-            booking.Room = room;
-            booking.GuestName = bookingDTO.GuestName;
-            booking.GuestEmail = bookingDTO.GuestEmail;
-            booking.GuestPhoneNr = bookingDTO.GuestPhoneNr;
-            booking.StartDate = DateTime.SpecifyKind(bookingDTO.StartDate, DateTimeKind.Utc);
-            booking.EndDate = DateTime.SpecifyKind(bookingDTO.EndDate, DateTimeKind.Utc);
+            existingBooking.Room = room;
+            existingBooking.FullName = booking.FullName;
+            existingBooking.Email = booking.Email;
+            existingBooking.PhoneNr = booking.PhoneNr;
+            existingBooking.StartDate = DateTime.SpecifyKind(booking.StartDate, DateTimeKind.Utc);
+            existingBooking.EndDate = DateTime.SpecifyKind(booking.EndDate, DateTimeKind.Utc);
 
-            _hotelContext.Entry(booking).State = EntityState.Modified;
+            _hotelContext.Entry(existingBooking).State = EntityState.Modified;
             _hotelContext.SaveChanges();
 
             return Ok("Done");
