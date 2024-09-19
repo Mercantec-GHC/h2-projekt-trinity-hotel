@@ -1,4 +1,6 @@
-﻿@page "/profilepage/{UserId}"
+﻿@page "/profilepage"
+@inject AppState AppState
+
 @using DomainModels
 @using System.Globalization
 @inject HttpClient HttpClient
@@ -37,8 +39,7 @@ else
     // List to store bookings fetched from the API
     List<DomainModels.Booking> bookings = new();
 
-    [Parameter]
-    public string UserId { get; set; }
+    public int UserId { get; set; }
 
     // Message for error or status display
     string message = "";
@@ -50,6 +51,8 @@ else
     protected override async Task OnInitializedAsync()
     {
         // Fetch the user details first (assumed you're passing userId somehow, e.g., route parameter)
+        if (!AppState.LoggedIn) return;
+        UserId = AppState.UserId;
         await FetchUserDetails();
 
         if (user != null)
