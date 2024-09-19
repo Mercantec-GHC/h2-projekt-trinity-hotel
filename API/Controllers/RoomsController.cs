@@ -24,7 +24,7 @@ namespace API.Controllers
             {
                 //fetches a list of rooms with specific fields only
                 var rooms = await _hotelContext.Rooms
-                    .Select(r => new { r.RoomId, r.Type, r.Price, r.BookedDays })
+                    .Select(r => new { r.RoomId, r.Type, r.Price})
                     .ToListAsync();
                 //Returns an Ok(200) response with the list of rooms
                 return Ok(rooms);
@@ -120,8 +120,6 @@ namespace API.Controllers
                 return NotFound();
             }
 
-            //Updates only the BookedDays property
-            existingRoom.BookedDays = room.BookedDays;
 
             // Mark the room entity as modified in the context
             _hotelContext.Entry(existingRoom).State = EntityState.Modified;

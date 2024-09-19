@@ -29,7 +29,6 @@ namespace API.Controllers
 
             var booking = await _hotelContext.Bookings
                 .Where(b => b.BookingId == BookingId)
-                .Include(b => b.Room)
                 .FirstOrDefaultAsync();
             if (booking == null)
             {
@@ -76,20 +75,11 @@ namespace API.Controllers
 
             var newbooking = new Booking
             {
-                Room = room,
-                FullName = booking.FullName,
-                Email = booking.Email,
-                PhoneNr = booking.PhoneNr,
+                UserId = booking.UserId,
                 StartDate = DateTime.SpecifyKind(booking.StartDate, DateTimeKind.Utc),
                 EndDate = DateTime.SpecifyKind(booking.EndDate, DateTimeKind.Utc)
             };
             _hotelContext.Bookings.Add(newbooking);
-
-            //update room booked days.
-            room.BookedDays.AddRange(Enumerable
-                .Range(0, (int)(newbooking.EndDate - newbooking.StartDate).TotalDays)
-                .Select(i => DateTime.SpecifyKind(newbooking.StartDate, DateTimeKind.Utc)
-                .AddDays(i)));
 
             _hotelContext.SaveChanges();
 
@@ -106,11 +96,8 @@ namespace API.Controllers
                     var existingBooking = await _hotelContext.Bookings.FindAsync(booking.BookingId);
                     if (existingBooking != null)
                     {
-                        existingBooking.Room.Type = booking.Room.Type;
                         existingBooking.StartDate = booking.StartDate;
                         existingBooking.EndDate = booking.EndDate;
-                        existingBooking.Email = booking.Email;
-                        existingBooking.PhoneNr = booking.PhoneNr;
 
                         _hotelContext.Update(existingBooking);
                     }
@@ -158,10 +145,6 @@ namespace API.Controllers
                 return BadRequest("Invalid date range");
             }
 
-            existingBooking.Room = room;
-            existingBooking.FullName = booking.FullName;
-            existingBooking.Email = booking.Email;
-            existingBooking.PhoneNr = booking.PhoneNr;
             existingBooking.StartDate = DateTime.SpecifyKind(booking.StartDate, DateTimeKind.Utc);
             existingBooking.EndDate = DateTime.SpecifyKind(booking.EndDate, DateTimeKind.Utc);
 

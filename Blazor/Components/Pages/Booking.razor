@@ -10,21 +10,6 @@
 @if (!bookingCompleted)
 {
     <div class="mb-3">
-        <label for="fullName" class="form-label">Full Name:</label>
-        <input type="text" class="form-control" id="fullName" @bind="booking.FullName" />
-    </div>
-
-    <div class="mb-3">
-        <label for="email" class="form-label">Email:</label>
-        <input type="email" class="form-control" id="email" @bind="booking.Email" />
-    </div>
-
-    <div class="mb-3">
-        <label for="phoneNr" class="form-label">Phone Number:</label>
-        <input type="tel" class="form-control" id="phoneNr" @bind="booking.PhoneNr" />
-    </div>
-
-    <div class="mb-3">
         <label for="startDate" class="form-label">From:</label>
         <input type="date" class="form-control" id="startDate" @bind="booking.StartDate" min="@DateTime.UtcNow.ToString("yyyy-MM-dd")" />
     </div>
@@ -52,9 +37,6 @@ else
     @if (bookingSuccessful)
     {
         <h2>Booking Confirmation:</h2>
-        <p>Name: @booking.FullName</p>
-        <p>Email: @booking.Email</p>
-        <p>Phone number: @booking.PhoneNr</p>
         <p>Room type and cost: @GetRoomTypeName(selectedRoom.Type) (@selectedRoom.Price DKK per night)</p>
         <p>From: @booking.StartDate.ToShortDateString()</p>
         <p>To: @booking.EndDate.ToShortDateString()</p>
@@ -112,7 +94,7 @@ else
 
     private async Task FinishBooking()
     {
-        if (string.IsNullOrWhiteSpace(booking.FullName) || string.IsNullOrWhiteSpace(booking.Email) || GetRoomTypeName(selectedRoomType) == "Unkown")
+        if (GetRoomTypeName(selectedRoomType) == "Unkown")
         {
             errorMessage = "Please fill in all required fields.";
             bookingCompleted = true;
