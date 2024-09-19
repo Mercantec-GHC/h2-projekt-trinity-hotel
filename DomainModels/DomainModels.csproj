@@ -7,7 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="8.2.0" />
     <PackageReference Include="Blazor.Bootstrap" Version="3.0.0" />
+    <PackageReference Include="Blazorise.Icons.FontAwesome" Version="1.6.1" />
   </ItemGroup>
 
 </Project>
