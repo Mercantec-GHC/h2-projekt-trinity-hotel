@@ -39,77 +39,8 @@ namespace API.Controllers
             return Ok(booking);
         }
 
-
-        [HttpGet("name/{GuestName}")]
-        public async Task<ActionResult<Booking>> GetBookingByGuestName(string GuestName)
-        {
-            var booking = await _hotelContext.Bookings
-                .Where(b => b.GuestName == GuestName)
-                .Include(b => b.Room)
-                .FirstOrDefaultAsync();
-            if (booking == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(booking);
-        }
-
-        [HttpGet("email/{GuestEmail}")]
-        public async Task<ActionResult<Booking>> GetBookingByGuestEmail(string GuestEmail)
-        {
-            var booking = await _hotelContext.Bookings
-                .Where(b => b.GuestEmail == GuestEmail)
-                .Include(b => b.Room)
-                .FirstOrDefaultAsync();
-            if (booking == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(booking);
-        }
-
-        [HttpGet("emails/{GuestEmail}")]
-        public async Task<ActionResult<List<Booking>>> GetBookingsByGuestEmail(string GuestEmail)
-        {
-            var bookings = await _hotelContext.Bookings
-                .Where(b => b.GuestEmail == GuestEmail)
-                .Include(b => b.Room)
-                .ToListAsync();
-            if (bookings == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(bookings);
-        }
-
-
-        [HttpGet("phone/{GuestPhoneNr}")]
-        public async Task<ActionResult<Booking>> GetBookingByGuestPhoneNr(string GuestPhoneNr)
-        {
-            var booking = await _hotelContext.Bookings
-                .Where(b => b.GuestPhoneNr == GuestPhoneNr)
-                .Include(b => b.Room)
-                .FirstOrDefaultAsync();
-            if (booking == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(booking);
-        }
-
-
-
-        [HttpPost("add")]
-
-        public ActionResult AddBooking(CreateBookingDTO bookingDTO)
-
         [HttpPost("add")]
         public ActionResult AddBooking(Booking booking)
-
         {
             var room = _hotelContext.Rooms.Find(booking.RoomId);
             // Data validation
@@ -228,7 +159,7 @@ namespace API.Controllers
         [HttpDelete("id/{BookingId}")]
         public async Task<ActionResult<Booking>> DeleteBooking(int BookingId)
         {
-            var booking =  _hotelContext.Bookings.Include(b => b.Room).Where(b => b.BookingId == BookingId).FirstOrDefault();
+            var booking = _hotelContext.Bookings.Include(b => b.Room).Where(b => b.BookingId == BookingId).FirstOrDefault();
             if (booking == null)
             {
                 return NotFound();
