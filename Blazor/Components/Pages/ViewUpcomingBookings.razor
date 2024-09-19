@@ -1,0 +1,72 @@
+﻿@page "/upcomingbookings"
+@using DomainModels
+@using System.Globalization
+@inject HttpClient HttpClient
+
+<h3>Upcoming Bookings</h3>
+<button @onclick=UpdateBookings>Update</button>
+
+@if (bookings != null && bookings.Any())
+{
+    @foreach (DomainModels.Booking booking in bookings)
+    {
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">@booking.FullName</h5>
+                <h6 class="card-subtitle mb-2 text-muted">@booking.Email</h6>
+                <p class="card-text">Room: @booking.RoomId</p>
+                <p class="card-text">Start Date: @booking.StartDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)</p>
+                <p class="card-text">End Date: @booking.EndDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)</p>
+                <a href="/editbooking/@booking.BookingId" class="btn btn-primary">Edit Booking</a>
+            </div>
+        </div>
+    }
+}
+else
+{
+    <p>No bookings available.</p>
+}
+
+@code {
+    // List to store bookings fetched from the API
+    List<DomainModels.Booking> bookings = new();
+
+    // Message for error or status display
+    string message = "";
+
+    // Called when the page initializes
+    protected override async Task OnInitializedAsync()
+    {
+        await UpdateBookings();
+    }
+
+    // Method to update bookings list by calling the API
+    async Task UpdateBookings()
+    {
+        try
+        {
+            // API call to fetch bookings
+            var response = await HttpClient.GetAsync("api/Bookings/all");
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Deserialize response to List<DomainModels.Booking>
+                bookings = await response.Content.ReadFromJsonAsync<List<DomainModels.Booking>>() ?? new List<DomainModels.Booking>();
+                message = "Bookings updated successfully.";
+            }
+            else
+            {
+                message = "Failed to fetch bookings.";
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"An error occurred: {ex.Message}";
+        }
+
+        // Force UI to re-render after bookings update
+        StateHasChanged();
+    }
+}
+
+

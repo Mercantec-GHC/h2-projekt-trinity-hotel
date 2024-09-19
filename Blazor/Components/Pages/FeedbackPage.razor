@@ -1,56 +1,111 @@
 ﻿@page "/feedback"
+@using DomainModels
+@inject HttpClient HttpClient
 
 <PageTitle>Trinity Hotel Feedback</PageTitle>
 
 <h3>Trinity Hotel Feedback</h3>
 
-
-@if (submitFeedback == false)
+@if (!submitFeedback)
 {
-	<button class="btn btn-dark" @onclick="Onclick">Make feedback</button>
-	@if (feedbacks == null)
-	{
-		<p>Loading feedback...</p>
-	}
-	else
-	{
-		@foreach (var feedback in feedbacks)
-		{
-			<div class="card">
-				<p>@feedback.FeedbackText</p>
-			</div>
-		}
-	}
+    <button class="btn btn-dark" @onclick="ShowFeedbackForm">Leave Feedback</button>
+    @if (feedbacks == null)
+    {
+        <p>Loading feedback...</p>
+    }
+    else
+    {
+        @foreach (var feedback in feedbacks)
+        {
+            <div class="card mt-3">
+                <div class="card-body">
+                    <p>@feedback.FeedbackText</p>
+                </div>
+            </div>
+        }
+    }
 }
 else
 {
-	<p>Write your feedback</p>
-	<input type="text" @bind="newFeedback.FeedbackText" placeholder="Your Feedback"/>
-	<button class="btn btn-dark" @onclick="SubmitFeedback">Submit</button>
+    <p>Write your feedback</p>
+    <input type="text" @bind="newFeedback.FeedbackText" class="form-control mb-2" placeholder="Your Feedback" />
+    <button class="btn btn-dark" @onclick="SubmitFeedback">Submit</button>
+    <button class="btn btn-secondary ml-2" @onclick="CancelFeedback">Cancel</button>
 }
 
-
 @code {
-	List<Feedback> feedbacks;
-	private Feedback newFeedback = new Feedback();
-	private bool submitFeedback = false;
+    private List<Feedback> feedbacks = new();
+    private Feedback newFeedback = new();
+    private bool submitFeedback = false;
 
-	protected override async Task OnInitializedAsync()
-	{
-		feedbacks = await DBServices.GetAllFeedbacks();
-	}
+    // On page initialization, fetch the existing feedback
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadFeedbacks();
+    }
 
-	// changes the page so customer can create a feedback.
-	private void Onclick()
-	{
-		submitFeedback = true;
-	}
+    // Loads all feedback from the API
+    private async Task LoadFeedbacks()
+    {
+        try
+        {
+            // Fetch feedbacks from the API (replace the endpoint with the correct one)
+            feedbacks = await HttpClient.GetFromJsonAsync<List<Feedback>>("api/Feedbacks") ?? new List<Feedback>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading feedbacks: {ex.Message}");
+            // Optionally, display an error message to the user
+        }
+    }
 
-	// Submits Feedback and updates the feedback page.
-	private async Task SubmitFeedback()
-	{
-		await DBServices.CreateFeedback(newFeedback);
-		submitFeedback = false;
-		feedbacks.Add(newFeedback);
-	}
+    // Show the feedback form
+    private void ShowFeedbackForm()
+    {
+        submitFeedback = true;
+        newFeedback = new Feedback();  // Reset the feedback form
+    }
+
+    // Submits the new feedback
+    private async Task SubmitFeedback()
+    {
+        if (!string.IsNullOrWhiteSpace(newFeedback.FeedbackText))
+        {
+            try
+            {
+                // Submit the new feedback to the API (replace the endpoint with the correct one)
+                var response = await HttpClient.PostAsJsonAsync("api/Feedbacks", newFeedback);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    // Feedback submitted successfully
+                    feedbacks.Add(newFeedback);
+                    submitFeedback = false;
+                    newFeedback = new Feedback(); // Clear the form
+                }
+                else
+                {
+                    Console.WriteLine("Failed to submit feedback.");
+                    // Optionally, show an error message to the user
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error submitting feedback: {ex.Message}");
+                // Optionally, show an error message to the user
+            }
+        }
+        else
+        {
+            // Handle the case where the feedback is empty
+            Console.WriteLine("Feedback text is empty.");
+        }
+    }
+
+    // Cancels the feedback submission
+    private void CancelFeedback()
+    {
+        submitFeedback = false;
+        newFeedback = new Feedback(); // Reset the feedback form
+    }
 }

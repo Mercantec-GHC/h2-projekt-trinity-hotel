@@ -8,44 +8,15 @@ using System.Threading.Tasks;
 
 namespace DomainModels
 {
-    enum Status
-    {
-        available,
-        underMaintenece,
-        needsCleaning
-    }
     public class Room
     {
         public int RoomId { get; set; }
-        public string Type { get; set; } = null!;
+        public int Type { get; set; } 
         public int Price { get; set; }
         public List<DateTime> BookedDays { get; set; } = new List<DateTime>();
-       Status Status { get; set; }
-    }
 
-    public class RoomPostDTO
-    {
-        public string Type { get; set; } = null!;
-        public int Price { get; set; }
-        //public List<DateTime> BookedDays { get; set; } = new List<DateTime>();
-        Status Status { get; set; }
-    }
+        // Navigation property for related bookings
+        public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
-    public class RoomPutDTO
-    {
-       
-        
-        public List<DateTime> BookedDays { get; set; } = new List<DateTime>();
-        Status Status { get; set; }
-    }
-    public class RoomPutAdmin
-    {
-
-        
-        public string Type { get; set; } = null!;
-        public int Price { get; set; }
-        
-        public List<DateTime>? BookedDays { get; set; } = new List<DateTime>();
-        Status Status { get; set; }
     }
 }

@@ -1,4 +1,7 @@
-﻿@inherits LayoutComponentBase
+﻿@inject AppState AppState
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@inherits LayoutComponentBase
 
 <div class="page">
     <div class="sidebar">
@@ -21,3 +24,28 @@
     <a href="" class="reload">Reload</a>
     <a class="dismiss">🗙</a>
 </div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        NavigationManager.LocationChanged += HandleLocationChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await AppState.InitializeStateAsync(JSRuntime);
+        }
+    }
+
+    private async void HandleLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        await AppState.InitializeStateAsync(JSRuntime);
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= HandleLocationChanged;
+    }
+}

@@ -1,0 +1,80 @@
+﻿@page "/admin-profile-list"
+@using DomainModels
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+@inject AppState AppState
+@inject ILogger<AdminProfileList> Logger
+
+<h3>Admin Profile List</h3>
+
+@if (!AppState.LoggedIn || !AppState.IsAdmin)
+{
+    <p>You do not have permission to access this page.</p>
+}
+else if (users == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div class="form-group">
+        <input type="text" class="form-control" placeholder="Search users..." @bind="searchTerm" @bind:event="oninput" @onkeyup="FilterUsers" />
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in filteredUsers)
+            {
+                <tr>
+                    <td>@user.UserId</td>
+                    <td>@user.FullName</td>
+                    <td>@user.Email</td>
+                    <td>
+                        <a href="@($"/admin-edit-profile/{user.UserId}")" class="btn btn-primary">Edit</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<User> users;
+    private List<User> filteredUsers;
+    private string searchTerm = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            if (!AppState.LoggedIn || !AppState.IsAdmin)
+            {
+                NavigationManager.NavigateTo("/");
+                return;
+            }
+
+            users = await HttpClient.GetFromJsonAsync<List<User>>("api/Users/all");
+            filteredUsers = users;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error in AdminProfileList OnInitializedAsync");
+        }
+    }
+
+    private void FilterUsers()
+    {
+        filteredUsers = users.Where(p =>
+            p.FullName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+            p.Email.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+            p.UserId.ToString().Contains(searchTerm)).ToList();
+    }
+}

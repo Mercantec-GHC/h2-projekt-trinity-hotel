@@ -1,216 +1,168 @@
 ﻿@page "/booking"
-@using System.Net.Mail
-@using System.Net
-@inject HttpClient httpClient
-@using Services
+@inject HttpClient HttpClient
+@inject NavigationManager NavManager
 
 <PageTitle>Book a room</PageTitle>
 
-<head>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</head>
+<h1>Book a room</h1>
 
-@if (bookingCompleted == false)
+@if (!bookingCompleted)
 {
-    <h1>Book a room</h1>
-
-    <p>Enter guest name:</p>
-    <input type="text" @bind="booking.GuestName" placeholder="Enter text" />
-    <p></p>
-
-    <p>Enter guest email:</p>
-    <input type="text" @bind="booking.GuestEmail" placeholder="Enter email" />
-    <p></p>
-
-    <p>Enter guest phone number:</p>
-    <input type="text" @bind="booking.GuestPhoneNr" placeholder="Enter phone number" />
-    <p></p>
-
-    <p>From:</p>
-    <input type="date" @bind="booking.StartDate" min="@DateTime.UtcNow" />
-    <p></p>
-
-    <p>To:</p>
-    <input type="date" @bind="booking.EndDate" min="@startDate.AddDays(1)" />
-
-    <div class="dropdown mt-3">
-        @if (roomType != null)
-        {
-            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-                @roomType (@price per night)
-            </button>
-        }
-        else
-        {
-            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-                Choose desired room type
-            </button>
-        }
-        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-            <li><button class="dropdown-item" @onclick="() => SetRoomType(0)">Standard single (600 dkk pr night)</button></li>
-            <li><button class="dropdown-item" @onclick="() => SetRoomType(1)">Standard double (800 dkk pr night)</button></li>
-            <li><button class="dropdown-item" @onclick="() => SetRoomType(2)">Premium single (900 dkk pr night)</button></li>
-            <li><button class="dropdown-item" @onclick="() => SetRoomType(3)">Premium double (1200 dkk pr night)</button></li>
-            <li><button class="dropdown-item" @onclick="() => SetRoomType(4)">Penthouse (3000 dkk pr night)</button></li>
-        </ul>
+    <div class="mb-3">
+        <label for="fullName" class="form-label">Full Name:</label>
+        <input type="text" class="form-control" id="fullName" @bind="booking.FullName" />
     </div>
 
-    <button class="btn btn-primary" @onclick="FinishBooking">Click me</button>
+    <div class="mb-3">
+        <label for="email" class="form-label">Email:</label>
+        <input type="email" class="form-control" id="email" @bind="booking.Email" />
+    </div>
 
+    <div class="mb-3">
+        <label for="phoneNr" class="form-label">Phone Number:</label>
+        <input type="tel" class="form-control" id="phoneNr" @bind="booking.PhoneNr" />
+    </div>
+
+    <div class="mb-3">
+        <label for="startDate" class="form-label">From:</label>
+        <input type="date" class="form-control" id="startDate" @bind="booking.StartDate" min="@DateTime.UtcNow.ToString("yyyy-MM-dd")" />
+    </div>
+
+    <div class="mb-3">
+        <label for="endDate" class="form-label">To:</label>
+        <input type="date" class="form-control" id="endDate" @bind="booking.EndDate" min="@booking.StartDate.AddDays(1).ToString("yyyy-MM-dd")" />
+    </div>
+
+    <div class="mb-3">
+        <label for="roomType" class="form-label">Room Type:</label>
+        <select class="form-select" id="roomType" @bind="selectedRoomType">
+            <option value="">Choose desired room type</option>
+            @foreach (var room in availableRooms)
+            {
+                <option value="@room.RoomId">@GetRoomTypeName(room.Type) (@room.Price DKK per night)</option>
+            }
+        </select>
+    </div>
+
+    <button class="btn btn-primary" @onclick="FinishBooking">Book Now</button>
 }
-else if (roomFree)
+else
 {
-    <h1>Booking confirmation:</h1>
-
-    <p>Name: @booking.GuestName</p>
-    <p></p>
-
-    <p>Email: @booking.GuestEmail</p>
-    <p></p>
-
-    <p>Phone number: @booking.GuestPhoneNr</p>
-    <p></p>
-
-    <p>Room type and cost: @roomType (@price per night)</p>
-    <p></p>
-
-    <p>From: @DateOnly.FromDateTime(booking.StartDate)</p>
-    <p></p>
-
-    <p>To: @DateOnly.FromDateTime(booking.EndDate)</p>
-    <p></p>
-
-    <button class="btn btn-primary" @onclick="GoToBooking">Create another booking</button>
-
-}
-else if (!roomFree)
-{
-    <h1>No rooms of type available for selected dates</h1>
+    @if (bookingSuccessful)
+    {
+        <h2>Booking Confirmation:</h2>
+        <p>Name: @booking.FullName</p>
+        <p>Email: @booking.Email</p>
+        <p>Phone number: @booking.PhoneNr</p>
+        <p>Room type and cost: @GetRoomTypeName(selectedRoom.Type) (@selectedRoom.Price DKK per night)</p>
+        <p>From: @booking.StartDate.ToShortDateString()</p>
+        <p>To: @booking.EndDate.ToShortDateString()</p>
+        <button class="btn btn-primary" @onclick="ResetBooking">Create another booking</button>
+    }
+    else
+    {
+        <h2>Booking Failed</h2>
+        <p>@errorMessage</p>
+        <button class="btn btn-primary" @onclick="ResetBooking">Try Again</button>
+    }
 }
 
 @code {
-    //these are used to be able to log in to the mails we use for testing
-    string guestPassword = "TrinityGuest!";
-    string bookingMail = "trinityHotelEmployee@outlook.com";
-    string password = "TrinityBooking!";
-    string roomType = "standard single";
+    private DomainModels.Booking booking = new DomainModels.Booking();
+    private List<DomainModels.Room> availableRooms = new List<DomainModels.Room>();
+    private int selectedRoomType;
+    private DomainModels.Room selectedRoom;
+    private bool bookingCompleted = false;
+    private bool bookingSuccessful = false;
+    private string errorMessage = "";
 
-    //this is used to give feedback to the user as to whether a booking went through or not
-    bool bookingCompleted = false;
-    //this is used to check if a room is free and stop from looping through more than necessary if a room is booked at least one date in the selected range of dates
-    public bool roomFree = true;
-
-    ReusableRoomFunctions RRFunctions = new ReusableRoomFunctions();
-    //booking placeholder that has the values getting filled into the booking table in DB
-    public CreateBookingDTO booking = new CreateBookingDTO()
-        {
-            GuestEmail = "trinityHotelGuest@outlook.com",
-            StartDate = DateTime.UtcNow.AddHours(3),
-            EndDate = DateTime.UtcNow.AddDays(1),
-            RoomId = 1,
-            UserId = 1
-        };
-
-    //Placeholder room that is used for a put function to the database so we can update booked days for a room in DB
-    private Room room = new Room();
-
-    //Start date and end date for the booking, start date is included but end date is the day the guest is checking out
-    //we decided the end date should not be saved as a booked date on the room so someone else can check in that day
-    //we also decided to include start date, that way a room can get 
-    //freed up, cleaned and then someone can check in and get it on the same day,
-    //without two people booking the same room from that day
-    DateTime startDate = DateTime.UtcNow;
-    DateTime endDate = DateTime.UtcNow.AddDays(1);
-
-    //this is used to display the price of currently selected room type on the dropdown
-    int price = 600;
-
-    //this function is used by the dropdown further up to set a room type and a price, 
-    // room type is used to make sure the room attached to the booking will be the correct type
-    private void SetRoomType(int typeIndex)
+    protected override async Task OnInitializedAsync()
     {
-        switch (typeIndex)
-        {
-            case 0:
-                roomType = "standard single";
-                price = 600;
-                break;
-            case 1:
-                roomType = "standard double";
-                price = 800;
-                break;
-            case 2:
-                roomType = "premium single";
-                price = 900;
-                break;
-            case 3:
-                roomType = "premium double";
-                price = 1200;
-                break;
-            case 4:
-                roomType = "penthouse";
-                price = 3000;
-                break;
-        }
-        Console.WriteLine($"Selected Room Type: {roomType}");
+        await LoadAvailableRooms();
+        booking.StartDate = DateTime.UtcNow;
+        booking.EndDate = DateTime.UtcNow.AddDays(1);
     }
 
+    private async Task LoadAvailableRooms()
+    {
+        try
+        {
+            availableRooms = await HttpClient.GetFromJsonAsync<List<DomainModels.Room>>("api/Rooms/types") ?? new List<DomainModels.Room>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading rooms: {ex.Message}");
+            // Handle error (e.g., show a message to the user)
+        }
+    }
 
-    //we use this function to do what we need to do when the guest finishes a booking
-    //first we make the booking by calling a function in charge of doing everything related to the booking
-    //then if the booking has a room we will send an email to the guest
-    //finally we set booking completed to true which will display the result to the guest
+    private string GetRoomTypeName(int type)
+    {
+        return type switch
+        {
+            0 => "Standard Single",
+            1 => "Standard Double",
+            2 => "Premium Single",
+            3 => "Premium Double",
+            4 => "Penthouse",
+            _ => "Unknown"
+        };
+    }
+
     private async Task FinishBooking()
     {
-        await CreateBooking();
-        if(booking.RoomId > 0)
+        if (string.IsNullOrWhiteSpace(booking.FullName) || string.IsNullOrWhiteSpace(booking.Email) || selectedRoomType == 0)
         {
-            await SendMail();
+            errorMessage = "Please fill in all required fields.";
+            bookingCompleted = true;
+            bookingSuccessful = false;
+            return;
         }
+
+        selectedRoom = availableRooms.FirstOrDefault(r => r.RoomId == selectedRoomType);
+        if (selectedRoom == null)
+        {
+            errorMessage = "Invalid room selection.";
+            bookingCompleted = true;
+            bookingSuccessful = false;
+            return;
+        }
+
+        booking.RoomId = selectedRoom.RoomId;
+        booking.UserId = 1; // Assuming a default user ID for now
+
+        try
+        {
+            var response = await HttpClient.PostAsJsonAsync("api/Bookings/add", booking);
+            if (response.IsSuccessStatusCode)
+            {
+                bookingSuccessful = true;
+            }
+            else
+            {
+                errorMessage = await response.Content.ReadAsStringAsync();
+                bookingSuccessful = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An error occurred: {ex.Message}";
+            bookingSuccessful = false;
+        }
+
         bookingCompleted = true;
     }
 
-
-    //this function is used to send a mail to a guest with a booking confirmation, through the email address defined above
-    //here we call a function that currently uses a predefined guest email to send the email to
-    public async Task SendMail()
+    private void ResetBooking()
     {
-
-        Console.WriteLine("test");
-
-
-        await MailServices.SendEmail(bookingMail, 
-           "Trinity hotel", 
-           $"Confirmed booking \n name: {booking.GuestName} \n email: {booking.GuestEmail} \n number: {booking.GuestPhoneNr} \n selected room type: {roomType} \n from: {DateOnly.FromDateTime(startDate)} \n To: {DateOnly.FromDateTime(endDate)}");
-    }
-
-    //this calls a function that gives the id of a room that is free for the duration of the booking
-    //then it saves that ID in a room as well as in a booking,
-    //if there was a free room of the room type for the duration two things happen:
-    //the room with our information is then used to update the corresponding room in the DB through our DBServices call
-    //finally the booking is used to create a new booking in DB through DBServices
-    private async Task CreateBooking()
-    {
-        booking.RoomId = await RRFunctions.GetRoom(roomType, booking, room);
-        if(booking.RoomId == 0)
-        {
-            roomFree = false;
-        }
-        else
-        {
-            roomFree = true;
-        }
-        room.RoomId = booking.RoomId;
-        if (booking.RoomId > 0)
-        {
-            await DBServices.InsertBookedDaysInRoomTable(room, booking.RoomId);
-            await DBServices.CreateBooking(booking);
-        }
-    }
-
-    //this is used to allow the user to book another room after the first booking has gone through
-    public void GoToBooking()
-    {
+        booking = new DomainModels.Booking
+            {
+                StartDate = DateTime.UtcNow,
+                EndDate = DateTime.UtcNow.AddDays(1)
+            };
+        selectedRoomType = 0;
         bookingCompleted = false;
+        bookingSuccessful = false;
+        errorMessage = "";
     }
 }

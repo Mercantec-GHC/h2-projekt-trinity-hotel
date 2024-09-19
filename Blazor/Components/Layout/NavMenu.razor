@@ -1,4 +1,8 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@inject AppState AppState
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">Blazor</a>
     </div>
@@ -9,8 +13,31 @@
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="flex-column">
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="room-details" Match="NavLinkMatch.All">
+            <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
                 <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+            </NavLink>
+        </div>
+
+        @if (!AppState.LoggedIn)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="login">
+                    <span class="bi bi-box-arrow-in-right-nav-menu" aria-hidden="true"></span> Login
+                </NavLink>
+            </div>
+        }        
+        else
+        {
+            <div class="nav-item px-3">
+                <button class="nav-link" @onclick="Logout">
+                    <span class="bi bi-box-arrow-right-nav-menu" aria-hidden="true"></span> Logout
+                </button>
+            </div>
+        }
+        
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="create-profile">
+                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Create Profile
             </NavLink>
         </div>
 
@@ -37,18 +64,42 @@
                 <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Feedback
             </NavLink>
         </div>
+
+        @if (AppState.LoggedIn)
+        {
         <div class="nav-item px-3">
-            @* Changed the href to profile/1 so it will load the user for easy testing *@
-            <NavLink class="nav-link" href="profile/1">
+            <NavLink class="nav-link" href="profilepage">
                 <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Profile Page
             </NavLink>
         </div>
+        }
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="All-profiles">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Admin all profiles
-            </NavLink>
-        </div>
+        @if (AppState.LoggedIn && AppState.IsAdmin)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="admin-profile-list">
+                    <span class="bi bi-list-ul-nav-menu" aria-hidden="true"></span> Manage Profiles
+                </NavLink>
+            </div>
+        }
     </nav>
 </div>
 
+@code {
+    protected override void OnInitialized()
+    {
+        AppState.OnChange += StateHasChanged;
+    }
+
+    private async Task Logout()
+    {
+        await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
+        AppState.LoggedIn = false;
+        NavigationManager.NavigateTo("/");
+    }
+
+    public void Dispose()
+    {
+        AppState.OnChange -= StateHasChanged;
+    }
+}

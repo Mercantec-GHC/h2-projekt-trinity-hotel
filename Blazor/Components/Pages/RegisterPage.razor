@@ -1,35 +1,81 @@
-﻿@page "/Register"
-<h3>Register</h3>
+﻿@page "/create-profile"
+@using DomainModels
+@inject IHttpClientFactory HttpClientFactory
+@inject NavigationManager NavigationManager
 
+<h3>Create Profile</h3>
 
+<EditForm Model="@registerDto" OnValidSubmit="@HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
 
-    <div class="imgcontainer">
-        <img src="/Pictures/Trinity-logo.png" height="300px" alt="Image">
+    <div class="form-group">
+        <label for="name">Name:</label>
+        <InputText id="name" @bind-Value="registerDto.FullName" class="form-control" autocomplete="name" />
     </div>
 
-    <div class="container">
-    <label for="fname"><b>Full Name</b></label>
-    <input @bind-value="FullName" type="text" placeholder="Enter First Name" name="fname" required>
-
-        <label for="Email"><b>Email</b></label>
-        <input @bind-value="Email" type="email" placeholder="Enter Email" name="Email" required>
-
-        <label for="psw"><b>Phone Number</b></label>
-        <input @bind-value="PhoneNr" type="password" placeholder="Enter Password" name="psw" required>
-
-        <label for="psw"><b>Password</b></label>
-        <input @bind-value="Password" type="password" placeholder="Enter Password" name="psw" required>
-
-       
+    <div class="form-group">
+        <label for="email">Email:</label>
+        <InputText id="email" @bind-Value="registerDto.Email" class="form-control" autocomplete="email" />
     </div>
 
-    <div class="button-container">
-    <a @onclick="RegisterUser" class="register-button">Confirm</a>
-
-    <a href="Login">
-        <button>Already have an account</button>
-    </a>
+    <div class="form-group">
+        <label for="password">Password:</label>
+        <InputText id="password" @bind-Value="registerDto.Password" class="form-control" type="password" autocomplete="new-password" />
     </div>
+
+    <div class="form-group">
+        <label for="phoneNumber">Phone Number:</label>
+        <InputText id="phoneNumber" @bind-Value="registerDto.PhoneNr" class="form-control" autocomplete="tel" />
+    </div>
+
+    <button type="submit" id="createProfileBtn" name="createProfileBtn" class="btn btn-primary" autocomplete="off">
+        Create Profile
+    </button>
+</EditForm>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger mt-3">@errorMessage</div>
+}
+
+@code {
+    private RegisterDto registerDto = new RegisterDto();
+    private string errorMessage = string.Empty;
+
+    private async Task HandleValidSubmit()
+    {
+        Console.WriteLine("HandleValidSubmit called");
+        errorMessage = string.Empty;
+        try
+        {
+
+            var client = HttpClientFactory.CreateClient("API");
+            Console.WriteLine($"Sending request to: {client.BaseAddress}api/Users/register");
+            Console.WriteLine($"Profile data: {System.Text.Json.JsonSerializer.Serialize(registerDto)}");
+            var response = await client.PostAsJsonAsync("api/Users/register", registerDto);
+            Console.WriteLine($"Response status: {response.StatusCode}");
+            var responseContent = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Response content: {responseContent}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                NavigationManager.NavigateTo("/login");
+            }
+            else
+            {
+                errorMessage = $"Registration failed: {responseContent}";
+                Console.WriteLine(errorMessage);
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An error occurred: {ex.Message}";
+            Console.WriteLine($"Exception occurred: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+        }
+    }
+}
 
 
 

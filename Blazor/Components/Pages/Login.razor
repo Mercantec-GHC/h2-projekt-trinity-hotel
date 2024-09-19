@@ -1,35 +1,63 @@
 ﻿@page "/login"
+@using DomainModels
+@inject AppState AppState
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
 <h3>Login</h3>
 
+<EditForm Model="@loginDto" OnValidSubmit="@HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
 
- 
+    <div class="form-group">
+        <label for="email">Email:</label>
+        <InputText id="email" @bind-Value="loginDto.Email" class="form-control" />
+    </div>
 
-        <div class="imgcontainer">
-            <img src="/Pictures/Trinity-logo.png" height="300px" alt="Image">
-        </div>
+    <div class="form-group">
+        <label for="password">Password:</label>
+        <InputText id="password" @bind-Value="loginDto.Password" class="form-control" type="password" />
+    </div>
 
+    <button type="submit" class="btn btn-primary">Login</button>
+</EditForm>
 
-      <div class="container">
-            <label for="Email"><b>Email</b></label>
-            <input @bind-value="Email" type="email" placeholder="Enter Email" name="Email" required>
+@code {
+    private LoginDto loginDto = new LoginDto();
 
-            <label for="psw"><b>Password</b></label>
-            <input @bind-value="Password" type="password" placeholder="Enter Password" name="psw" required>
+    private async Task HandleValidSubmit()
+    {
+        var response = await HttpClient.PostAsJsonAsync("api/Users/login", loginDto);
 
-        </div>
+        if (response.IsSuccessStatusCode)
+        {
+            var result = await response.Content.ReadFromJsonAsync<LoginResult>();
+            if (result?.Token != null)
+            {
+                await JSRuntime.InvokeVoidAsync("localStorage.setItem", "authToken", result.Token);
+                AppState.LoggedIn = true;
+                AppState.UserId = result.UserId;
+                AppState.IsAdmin = result.IsAdmin;
+                NavigationManager.NavigateTo("/");
+            }
+            NavigationManager.NavigateTo("/profilepage");
+        }
+        else
+        {
+            Console.WriteLine("Forkerte oplysninger, prøv igen");
+        }
+    }
 
-        <div class="button-container">
-            <button @onclick="LoginUser" type="submit" class="login-button">Login</button>
+    private class LoginResult
+    {
+        public string? Token { get; set; }
+        public int UserId { get; set; }
+        public bool IsAdmin { get; set; }
+    }
+}
 
-              <a href="Register">
-                   <button>Register</button>
-              </a>
-        </div>
-        
-
-        <div class="container text-center" style="background-color:#f1f1f1">
-            <button type="button" class="cancel-button">Cancel</button>
-        </div>
     
 
 
