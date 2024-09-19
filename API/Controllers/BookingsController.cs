@@ -103,7 +103,7 @@ namespace API.Controllers
 
 
         [HttpPost("add")]
-
+       
         public ActionResult AddBooking(CreateBookingDTO bookingDTO)
         {
             var room = _hotelContext.Rooms.Find(bookingDTO.RoomId);
@@ -170,7 +170,7 @@ namespace API.Controllers
         }
 
         [HttpPut("update")]
-
+        
         [ProducesResponseType(204)]
         public ActionResult UpdateBooking(UpdateBookingDTO bookingDTO)
         {
@@ -222,7 +222,7 @@ namespace API.Controllers
 
             return Ok("Done");
         }
-
+                
         [HttpDelete("id/{BookingId}")]
         public async Task<ActionResult<Booking>> DeleteBooking(int BookingId)
         {
@@ -232,7 +232,7 @@ namespace API.Controllers
                 return NotFound();
             }
 
-
+            
             _hotelContext.Bookings.Remove(booking);
             await _hotelContext.SaveChangesAsync();
             return NoContent();
