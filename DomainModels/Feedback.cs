@@ -9,6 +9,7 @@ namespace DomainModels
 	public class Feedback
 	{
 		public int FeedBackId { get; set; }
-		public string FeedbackText { get; set; } = null!;
+        public int UserId { get; set; }
+        public string FeedbackText { get; set; } = null!;
 	}
 }

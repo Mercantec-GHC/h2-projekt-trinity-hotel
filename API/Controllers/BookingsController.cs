@@ -45,17 +45,18 @@ namespace API.Controllers
             var room = _hotelContext.Rooms.Find(booking.RoomId);
 
             var bookings = _hotelContext.Bookings.ToArray();
-            for (int i = 0; i<bookings.Length; i++)
+            var existingBookings = _hotelContext.Bookings
+            .Where(b => b.RoomId == booking.RoomId &&
+                ((booking.StartDate >= b.StartDate && booking.StartDate < b.EndDate) ||
+                 (booking.EndDate > b.StartDate && booking.EndDate <= b.EndDate) ||
+                 (booking.StartDate <= b.StartDate && booking.EndDate >= b.EndDate)))
+                .ToList();
+
+            if (existingBookings.Any())
             {
-                if (bookings[i].RoomId == room.RoomId)
-                {
-                    if (booking.StartDate < bookings[i].StartDate && booking.EndDate > bookings[i].EndDate)
-                    {
-                        //Overlap
-                        return BadRequest("Date Already booked");
-                    }
-                }
+                return BadRequest("Room is already booked for the selected dates.");
             }
+
 
             // Data validation
             if (room == null)

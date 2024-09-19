@@ -1,4 +1,5 @@
 ﻿@page "/booking"
+@inject AppState AppState
 @inject HttpClient HttpClient
 @inject NavigationManager NavManager
 
@@ -111,7 +112,7 @@ else
 
     private async Task FinishBooking()
     {
-        if (string.IsNullOrWhiteSpace(booking.FullName) || string.IsNullOrWhiteSpace(booking.Email) || selectedRoomType == 0)
+        if (string.IsNullOrWhiteSpace(booking.FullName) || string.IsNullOrWhiteSpace(booking.Email) || GetRoomTypeName(selectedRoomType) == "Unkown")
         {
             errorMessage = "Please fill in all required fields.";
             bookingCompleted = true;
@@ -129,7 +130,7 @@ else
         }
 
         booking.RoomId = selectedRoom.RoomId;
-        booking.UserId = 1; // Assuming a default user ID for now
+        booking.UserId = AppState.UserId; // Assuming a default user ID for now
 
         try
         {

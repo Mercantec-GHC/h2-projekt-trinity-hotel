@@ -13,8 +13,6 @@ namespace DomainModels
         public int RoomId { get; set; }
         public int Type { get; set; } 
         public int Price { get; set; }
-        public List<DateTime> BookedDays { get; set; } = new List<DateTime>();
-
         // Navigation property for related bookings
         public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
