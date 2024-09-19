@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace API.Migrations
 {
     [DbContext(typeof(HotelContext))]
-    [Migration("20240918121149_UpdateHotelContext")]
+    [Migration("20240919230632_UpdateHotelContext")]
     partial class UpdateHotelContext
     {
         /// <inheritdoc />
@@ -34,7 +34,6 @@ namespace API.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("BookingId"));
 
                     b.Property<string>("BookedDays")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Email")
@@ -95,7 +94,6 @@ namespace API.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("RoomId"));
 
                     b.Property<string>("BookedDays")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("Price")
@@ -155,21 +153,17 @@ namespace API.Migrations
 
             modelBuilder.Entity("DomainModels.Booking", b =>
                 {
-                    b.HasOne("DomainModels.Room", "Room")
+                    b.HasOne("DomainModels.Room", null)
                         .WithMany("Bookings")
                         .HasForeignKey("RoomId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("DomainModels.User", "User")
-                        .WithMany("RoomBookings")
+                    b.HasOne("DomainModels.User", null)
+                        .WithMany("Bookings")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("Room");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("DomainModels.Room", b =>
@@ -179,7 +173,7 @@ namespace API.Migrations
 
             modelBuilder.Entity("DomainModels.User", b =>
                 {
-                    b.Navigation("RoomBookings");
+                    b.Navigation("Bookings");
                 });
 #pragma warning restore 612, 618
         }

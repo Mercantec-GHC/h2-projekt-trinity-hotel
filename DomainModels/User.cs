@@ -37,8 +37,7 @@ namespace DomainModels
         [Column("phonenr")]
         public string? PhoneNr { get; set; }
 
-        // Navigation property for related bookings
-        public ICollection<Booking> RoomBookings { get; set; } = new List<Booking>();
+        public List<Booking> Bookings { get; set; } = new List<Booking>();
     }
 }
 

@@ -33,7 +33,7 @@ namespace API.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Type = table.Column<int>(type: "integer", nullable: false),
                     Price = table.Column<int>(type: "integer", nullable: false),
-                    BookedDays = table.Column<string>(type: "text", nullable: false)
+                    BookedDays = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -70,7 +70,7 @@ namespace API.Migrations
                     PhoneNr = table.Column<string>(type: "text", nullable: true),
                     StartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     EndDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    BookedDays = table.Column<string>(type: "text", nullable: false)
+                    BookedDays = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {

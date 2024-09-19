@@ -28,8 +28,8 @@ namespace API.Data
                 entity.Property(u => u.PhoneNr).HasMaxLength(20);
 
                 // Relationship with Booking
-                entity.HasMany(u => u.RoomBookings)
-                      .WithOne(b => b.User)
+                entity.HasMany(u => u.Bookings)
+                      .WithOne()
                       .HasForeignKey(b => b.UserId)
                       .OnDelete(DeleteBehavior.Restrict);
             });
@@ -42,15 +42,15 @@ namespace API.Data
                 entity.Property(r => r.Type).IsRequired();
                 entity.Property(r => r.Price).IsRequired();
                 entity.Property(r => r.BookedDays).HasConversion(
-                    v => string.Join(',', v),
-                    v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(DateTime.Parse).ToList()
+                    v => v != null ? string.Join(',', v) : null,
+                    v => v != null ? v.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(DateTime.Parse).ToList() : new List<DateTime>()
                 );
 
                 // Add value comparers for BookedDays
                 entity.Property(r => r.BookedDays)
                       .HasConversion(
-                          v => string.Join(',', v),
-                          v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(DateTime.Parse).ToList())
+                          v => v != null ? string.Join(',', v) : null,
+                          v => v != null ? v.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(DateTime.Parse).ToList() : new List<DateTime>())
                       .Metadata.SetValueComparer(new ValueComparer<List<DateTime>>(
                           (c1, c2) => c1.SequenceEqual(c2),
                           c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
@@ -58,7 +58,7 @@ namespace API.Data
 
                 // Relationship with Booking
                 entity.HasMany(r => r.Bookings)
-                      .WithOne(b => b.Room)
+                      .WithOne()
                       .HasForeignKey(b => b.RoomId)
                       .OnDelete(DeleteBehavior.Restrict);
 
@@ -74,31 +74,20 @@ namespace API.Data
                 entity.Property(b => b.StartDate).IsRequired();
                 entity.Property(b => b.EndDate).IsRequired();
                 entity.Property(b => b.BookedDays).HasConversion(
-                    v => string.Join(',', v),
-                    v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(DateTime.Parse).ToList()
+                    v => v != null ? string.Join(',', v) : null,
+                    v => v != null ? v.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(DateTime.Parse).ToList() : new List<DateTime>()
                 );
 
                 // Add value comparers for BookedDays
                 entity.Property(b => b.BookedDays)
                       .HasConversion(
-                          v => string.Join(',', v),
-                          v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(DateTime.Parse).ToList())
+                          v => v != null ? string.Join(',', v) : null,
+                          v => v != null ? v.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(DateTime.Parse).ToList() : new List<DateTime>())
                       .Metadata.SetValueComparer(new ValueComparer<List<DateTime>>(
                           (c1, c2) => c1.SequenceEqual(c2),
                           c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
                           c => c.ToList()));
 
-                // Relationship with Room
-                entity.HasOne(b => b.Room)
-                    .WithMany(r => r.Bookings)
-                    .HasForeignKey(b => b.RoomId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                // Relationship with User
-                entity.HasOne(b => b.User)
-                    .WithMany(u => u.RoomBookings)
-                    .HasForeignKey(b => b.UserId)
-                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             // Feedback configuration

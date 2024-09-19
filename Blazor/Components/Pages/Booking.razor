@@ -1,6 +1,7 @@
 ﻿@page "/booking"
 @inject HttpClient HttpClient
 @inject NavigationManager NavManager
+@inject AppState AppState
 
 <PageTitle>Book a room</PageTitle>
 
@@ -71,7 +72,7 @@ else
     private DomainModels.Booking booking = new DomainModels.Booking();
     private List<DomainModels.Room> availableRooms = new List<DomainModels.Room>();
     private int selectedRoomType;
-    private DomainModels.Room selectedRoom;
+    private DomainModels.Room? selectedRoom;
     private bool bookingCompleted = false;
     private bool bookingSuccessful = false;
     private string errorMessage = "";
@@ -111,6 +112,14 @@ else
 
     private async Task FinishBooking()
     {
+        if (!AppState.LoggedIn)
+        {
+            errorMessage = "User is not authenticated.";
+            bookingCompleted = true;
+            bookingSuccessful = false;
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(booking.FullName) || string.IsNullOrWhiteSpace(booking.Email) || selectedRoomType == 0)
         {
             errorMessage = "Please fill in all required fields.";
@@ -129,23 +138,30 @@ else
         }
 
         booking.RoomId = selectedRoom.RoomId;
-        booking.UserId = 1; // Assuming a default user ID for now
+        booking.UserId = AppState.UserId; // Use the authenticated user's ID
+
+        // Log the booking object for debugging
+        Console.WriteLine($"Booking Details: RoomId={booking.RoomId}, UserId={booking.UserId}, FullName={booking.FullName}, Email={booking.Email}, PhoneNr={booking.PhoneNr}, StartDate={booking.StartDate}, EndDate={booking.EndDate}");
 
         try
         {
             var response = await HttpClient.PostAsJsonAsync("api/Bookings/add", booking);
+            var responseContent = await response.Content.ReadAsStringAsync();
             if (response.IsSuccessStatusCode)
             {
                 bookingSuccessful = true;
             }
             else
             {
-                errorMessage = await response.Content.ReadAsStringAsync();
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Error response: {errorContent}");
+                errorMessage = $"Booking failed: {errorContent}";
                 bookingSuccessful = false;
             }
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"Exception: {ex.Message}");
             errorMessage = $"An error occurred: {ex.Message}";
             bookingSuccessful = false;
         }
