@@ -43,6 +43,20 @@ namespace API.Controllers
         public ActionResult AddBooking(Booking booking)
         {
             var room = _hotelContext.Rooms.Find(booking.RoomId);
+
+            var bookings = _hotelContext.Bookings.ToArray();
+            for (int i = 0; i<bookings.Length; i++)
+            {
+                if (bookings[i].RoomId == room.RoomId)
+                {
+                    if (booking.StartDate < bookings[i].StartDate && booking.EndDate > bookings[i].EndDate)
+                    {
+                        //Overlap
+                        return BadRequest("Date Already booked");
+                    }
+                }
+            }
+
             // Data validation
             if (room == null)
             {
