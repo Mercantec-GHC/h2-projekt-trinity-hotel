@@ -19,7 +19,9 @@ namespace API.Controllers
         [HttpGet("all")]
         public async Task<ActionResult<IEnumerable<Booking>>> GetBookings()
         {
-            var bookings = await _hotelContext.Bookings.Include(b => b.Room).ToArrayAsync();
+
+            var bookings = await _hotelContext.Bookings.ToArrayAsync();
+     
             return Ok(bookings);
         }
 
@@ -68,7 +70,7 @@ namespace API.Controllers
                 return BadRequest("Invalid date range");
             }
 
-            if (booking.StartDate < DateTime.Now)
+            if (booking.StartDate < DateTime.Now.Date)
             {
                 return BadRequest("Invalid date range");
             }
@@ -76,8 +78,8 @@ namespace API.Controllers
             var newbooking = new Booking
             {
                 UserId = booking.UserId,
-                StartDate = DateTime.SpecifyKind(booking.StartDate, DateTimeKind.Utc),
-                EndDate = DateTime.SpecifyKind(booking.EndDate, DateTimeKind.Utc)
+                StartDate = DateTime.SpecifyKind(booking.StartDate, DateTimeKind.Utc).Date,
+                EndDate = DateTime.SpecifyKind(booking.EndDate, DateTimeKind.Utc).Date
             };
             _hotelContext.Bookings.Add(newbooking);
 
@@ -157,7 +159,7 @@ namespace API.Controllers
         [HttpDelete("id/{BookingId}")]
         public async Task<ActionResult<Booking>> DeleteBooking(int BookingId)
         {
-            var booking = _hotelContext.Bookings.Include(b => b.Room).Where(b => b.BookingId == BookingId).FirstOrDefault();
+            var booking = _hotelContext.Bookings.Where(b => b.BookingId == BookingId).FirstOrDefault();
             if (booking == null)
             {
                 return NotFound();
