@@ -140,6 +140,10 @@ else
         booking.RoomId = selectedRoom.RoomId;
         booking.UserId = AppState.UserId; // Use the authenticated user's ID
 
+        // Convert StartDate and EndDate to UTC
+        booking.StartDate = booking.StartDate.ToUniversalTime();
+        booking.EndDate = booking.EndDate.ToUniversalTime();
+
         // Log the booking object for debugging
         Console.WriteLine($"Booking Details: RoomId={booking.RoomId}, UserId={booking.UserId}, FullName={booking.FullName}, Email={booking.Email}, PhoneNr={booking.PhoneNr}, StartDate={booking.StartDate}, EndDate={booking.EndDate}");
 
