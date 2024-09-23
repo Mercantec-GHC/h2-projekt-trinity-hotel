@@ -30,6 +30,21 @@ namespace API.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("BookingId"));
 
+                    b.Property<string>("BookedDays")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -67,6 +82,7 @@ namespace API.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("FeedBackId");
+                    b.HasKey("UserId");
 
                     b.ToTable("Feedbacks", (string)null);
                 });
