@@ -170,5 +170,19 @@ namespace API.Controllers
             await _hotelContext.SaveChangesAsync();
             return NoContent();
         }
+
+        [HttpGet("get_bookings_user/{UserId}")]
+        public async Task<ActionResult<IEnumerable<Booking>>> get_bookings_user(int UserId)
+        {
+            var booking = await _hotelContext.Bookings.Where(b => b.UserId == UserId).ToListAsync();
+            if (booking == null)
+            {
+                return NotFound();
+            }
+
+
+            return Ok(booking);
+        }
+
     }
 }
