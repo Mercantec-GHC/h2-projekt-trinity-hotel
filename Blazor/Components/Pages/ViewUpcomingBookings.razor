@@ -1,7 +1,9 @@
 ﻿@page "/upcomingbookings"
 @using DomainModels
+@inject AppState AppState
 @using System.Globalization
 @inject HttpClient HttpClient
+@inject NavigationManager NavManager
 
 <h3>Upcoming Bookings</h3>
 <button @onclick=UpdateBookings>Update</button>
@@ -35,6 +37,9 @@ else
     // Called when the page initializes
     protected override async Task OnInitializedAsync()
     {
+        //check permission else redirect to start page
+        if (!AppState.LoggedIn || !AppState.IsAdmin) NavManager.NavigateTo("/");
+
         await UpdateBookings();
     }
 

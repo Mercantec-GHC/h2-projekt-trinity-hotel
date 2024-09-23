@@ -34,24 +34,20 @@
                 </button>
             </div>
         }
-        
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="create-profile">
+        @if (!AppState.LoggedIn)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="create-profile">
                 <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Create Profile
             </NavLink>
         </div>
+        }
 
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="booking">
                 <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Booking
             </NavLink>
         </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="upcomingbookings">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Upcoming bookings
-            </NavLink>
-        </div> 
         
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="ticket">
@@ -76,9 +72,20 @@
 
         @if (AppState.LoggedIn && AppState.IsAdmin)
         {
+             <div class="nav-item px-3">
+
+                <a class="navbar-brand" style="color:white; text-align:center;">Admin pages</a>
+            </div>
+
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="admin-profile-list">
-                    <span class="bi bi-list-ul-nav-menu" aria-hidden="true"></span> Manage Profiles
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Manage Profiles
+                </NavLink>
+            </div>
+
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="upcomingbookings">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Upcoming bookings
                 </NavLink>
             </div>
         }
