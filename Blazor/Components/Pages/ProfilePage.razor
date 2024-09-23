@@ -1,10 +1,18 @@
 ﻿@page "/profilepage"
 @inject AppState AppState
-
+@inject IJSRuntime JSRuntime
 @using DomainModels
 @using System.Globalization
 @inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
 @inject AppState AppState
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+
+
+
+
 
 <h3>Your Profile</h3>
 
@@ -33,6 +41,7 @@ else
 {
     <p>@message</p>
 }
+<button class="btn btn-danger" @onclick="DeleteUserProfile">Slet Profil</button>
 
 @code {
     // List to store bookings fetched from the API
@@ -107,6 +116,37 @@ else
             message = $"An error occurred while fetching user details: {ex.Message}";
         }
     }
+    private async Task DeleteUserProfile()
+    {
+        // Bekræftelse dialog
+        if (await JSRuntime.InvokeAsync<bool>("confirm", "Er du sikker på, at du vil slette din profil? Denne handling kan ikke fortrydes."))
+        {
+            try
+            {
+                
+                var userId = AppState.UserId;
+
+                // Send en DELETE request til API'en
+                var response = await HttpClient.DeleteAsync($"api/Users/{userId}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    
+                    await JSRuntime.InvokeVoidAsync("localStorage.clear");
+
+             
+                    NavigationManager.NavigateTo("/login");
+                }
+                else
+                {
+               
+                    message = "Der opstod en fejl ved sletningen. Prøv igen senere.";
+                }
+            }
+          
+        }
+    }
+
 }
 
 
