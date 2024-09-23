@@ -123,7 +123,7 @@ else
         {
             try
             {
-                
+
                 var userId = AppState.UserId;
 
                 // Send en DELETE request til API'en
@@ -131,19 +131,23 @@ else
 
                 if (response.IsSuccessStatusCode)
                 {
-                    
+
                     await JSRuntime.InvokeVoidAsync("localStorage.clear");
 
-             
+
                     NavigationManager.NavigateTo("/login");
                 }
                 else
                 {
-               
                     message = "Der opstod en fejl ved sletningen. Prøv igen senere.";
                 }
             }
-          
+            catch (Exception ex)
+            {
+                // Log fejl og vis brugervenlig besked
+                Console.Error.WriteLine(ex.Message);
+                message = "Der opstod en fejl. Kontakt venligst administrator.";
+            }
         }
     }
 
