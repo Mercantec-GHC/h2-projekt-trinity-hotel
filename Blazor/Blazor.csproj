@@ -11,7 +11,7 @@
   <ItemGroup>
 
 
-    <Content Remove="Components\Pages\Component.razor" />
+    <Content Remove="Components\Pages\EditProfile.razor" />
   </ItemGroup>
 
   <ItemGroup>
@@ -40,6 +40,14 @@
   <ItemGroup>
     <ProjectReference Include="..\API\API.csproj" />
     <ProjectReference Include="..\DomainModels\DomainModels.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <UpToDateCheckInput Remove="Components\Pages\EditProfile.razor" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="Components\Pages\EditProfile.razor" />
   </ItemGroup>
 
 </Project>

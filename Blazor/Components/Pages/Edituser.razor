@@ -1,0 +1,86 @@
+﻿@page "/EditProfile/{id:int}"
+@using DomainModels
+@using System.Globalization
+@inject IHttpClientFactory HttpClientFactory
+@inject NavigationManager NavigationManager
+@inject AppState AppState
+@inject IJSRuntime JSRuntime
+
+<h3>Edit Profile</h3>
+
+@if (user != null)
+{
+    <EditForm Model="@user" OnValidSubmit="HandleValidSubmit">
+        <div>
+            <label for="name">Name:</label>
+            <InputText id="name" @bind-Value="user.FullName"  
+                       class="form-control" />
+        </div>
+
+        <div>
+            <label for="email">Email:</label>
+            <InputText id="email" @bind-Value="user.Email" class="form-control" />
+        </div>
+
+        <div>
+            <label for="phone">Phone Number:</label>
+            <InputText id="phone" @bind-Value="user.PhoneNr" class="form-control" />
+        </div>
+
+
+        <button type="submit" class="btn btn-primary">Save</button>
+
+
+
+    </EditForm>
+}
+@if (showEditForm)
+{
+    <EditForm Model="@user" OnValidSubmit="HandleValidSubmit">
+    </EditForm>
+}
+
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+
+    private User user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = await HttpClientFactory.CreateClient("API").GetFromJsonAsync<User>($"api/Users/{id}");
+        if (user == null || AppState.UserId != id)
+        {
+            NavigationManager.NavigateTo("/");
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        var httpClient = HttpClientFactory.CreateClient("API");
+        var response = await httpClient.PutAsJsonAsync($"api/Users/{user.UserId}", user);
+
+        if (response.IsSuccessStatusCode)
+        {
+            // Show confirmation message or dialog
+            if (await JSRuntime.InvokeAsync<bool>("confirm", "Profile updated successfully. Go to back to home?"))
+            {
+                NavigationManager.NavigateTo("/");
+            }
+        }
+        else
+        {
+            // Handle error
+            Console.WriteLine("Error updating profile");
+        }
+    }
+    private bool showEditForm = false;
+
+    private void ToggleEditForm()
+    {
+        showEditForm = !showEditForm;
+    }
+
+
+}

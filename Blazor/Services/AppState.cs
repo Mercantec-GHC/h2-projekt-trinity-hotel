@@ -94,5 +94,7 @@ using Microsoft.IdentityModel.JsonWebTokens;
 
             return (userId, isAdmin);
         }
-    }
+    public int LoggedInUserId { get; set; }
+
+}
 
