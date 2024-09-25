@@ -1,47 +1,56 @@
 ﻿@page "/feedback"
 @using DomainModels
+@using Blazor.Services
 @inject HttpClient HttpClient
+@inject AppState AppState
 
 <PageTitle>Trinity Hotel Feedback</PageTitle>
 
 <h3>Trinity Hotel Feedback</h3>
 
-@if (!submitFeedback)
+
+@if (feedbacks == null)
 {
-    <button class="btn btn-dark" @onclick="ShowFeedbackForm">Leave Feedback</button>
-    @if (feedbacks == null)
-    {
-        <p>Loading feedback...</p>
-    }
-    else
-    {
-        @foreach (var feedback in feedbacks)
-        {
-            <div class="card mt-3">
-                <div class="card-body">
-                    <p>@feedback.FeedbackText</p>
-                </div>
-            </div>
-        }
-    }
+    <p>Loading feedback...</p>
 }
 else
 {
-    <p>Write your feedback</p>
-    <input type="text" @bind="newFeedback.FeedbackText" class="form-control mb-2" placeholder="Your Feedback" />
-    <button class="btn btn-dark" @onclick="SubmitFeedback">Submit</button>
-    <button class="btn btn-secondary ml-2" @onclick="CancelFeedback">Cancel</button>
+    @foreach (var feedback in feedbacks)
+    {
+        <div class="card mt-3">
+            <div class="card-body">
+                <p><strong>@GetUserName(feedback.UserId)</strong>: @feedback.FeedbackText</p>
+            </div>
+        </div>
+    }
+}
+
+@if (!submitFeedback)
+{
+    @if (!AppState.LoggedIn)
+    {
+        <p><br />You must be logged in to leave feedback. <a href="/login">Login here</a></p>
+    }
+    else
+    {
+        <p><br />Write your feedback</p>
+        <input type="text" @bind="newFeedback.FeedbackText" class="form-control mb-2" placeholder="Your Feedback" />
+        <button class="btn btn-dark" @onclick="SubmitFeedback">Submit</button>
+        <button class="btn btn-secondary ml-2" @onclick="CancelFeedback">Cancel</button>
+    }
 }
 
 @code {
     private List<Feedback> feedbacks = new();
     private Feedback newFeedback = new();
     private bool submitFeedback = false;
+    private Dictionary<int, string> userNames = new();
 
     // On page initialization, fetch the existing feedback
     protected override async Task OnInitializedAsync()
     {
         await LoadFeedbacks();
+        await LoadUserNames();
     }
 
     // Loads all feedback from the API
@@ -59,6 +68,28 @@ else
         }
     }
 
+    // Loads all user names from the API
+    private async Task LoadUserNames()
+    {
+        try
+        {
+            var users = await HttpClient.GetFromJsonAsync<List<User>>("api/Users/all");
+            if (users != null)
+            {
+                userNames = users.ToDictionary(user => user.UserId, user => user.FullName);
+                Console.WriteLine("User names loaded successfully.");
+            }
+            else
+            {
+                Console.WriteLine("No users found.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading user names: {ex.Message}");
+        }
+    }
+
     // Show the feedback form
     private void ShowFeedbackForm()
     {
@@ -73,6 +104,8 @@ else
         {
             try
             {
+                newFeedback.UserId = AppState.UserId; // Get the logged-in user's ID
+
                 // Submit the new feedback to the API (replace the endpoint with the correct one)
                 var response = await HttpClient.PostAsJsonAsync("api/Feedbacks", newFeedback);
 
@@ -99,6 +132,20 @@ else
         {
             // Handle the case where the feedback is empty
             Console.WriteLine("Feedback text is empty.");
+        }
+    }
+
+    // Method to get the full name based on UserId
+    private string GetUserName(int userId)
+    {
+        if (userNames.ContainsKey(userId))
+        {
+            return userNames[userId];
+        }
+        else
+        {
+            Console.WriteLine($"User ID {userId} not found in userNames dictionary.");
+            return "Unknown User";
         }
     }
 

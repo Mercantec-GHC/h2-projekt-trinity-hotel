@@ -32,7 +32,12 @@ namespace API.Controllers
 		[HttpPost]
 		public async Task<ActionResult<Feedback>> CreateFeedback(Feedback feedback)
 		{
-			try
+            if (feedback.UserId == 0)
+            {
+                return Unauthorized("User must be logged in to submit feedback.");
+            }
+
+            try
 			{
 				_hotelContext.Feedbacks.Add(feedback);
 				await _hotelContext.SaveChangesAsync();
