@@ -103,6 +103,10 @@
         booking.RoomId = selectedRoom.RoomId;
         booking.UserId = AppState.UserId; // Assuming a default user ID for now
 
+                                          // Convert StartDate and EndDate to UTC
+        booking.StartDate = booking.StartDate.ToUniversalTime();
+        booking.EndDate = booking.EndDate.ToUniversalTime();
+
         try
         {
             var response = await HttpClient.PostAsJsonAsync("api/Bookings/add", booking);

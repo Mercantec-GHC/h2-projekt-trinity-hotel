@@ -41,7 +41,7 @@ namespace API.Controllers
         }
 
         [HttpPost("add")]
-        public ActionResult AddBooking(Booking booking)
+        public async Task<IActionResult> AddBooking([FromBody] Booking booking)
         {
             var room = _hotelContext.Rooms.Find(booking.RoomId);
 
@@ -63,6 +63,12 @@ namespace API.Controllers
             if (room == null)
             {
                 return NotFound("room not found");
+            }
+
+            var user = await _hotelContext.Users.FindAsync(booking.UserId);
+            if (user == null)
+            {
+                return NotFound("User not found.");
             }
 
             if (booking.StartDate >= booking.EndDate)

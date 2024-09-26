@@ -42,8 +42,12 @@ else
     <p>@message</p>
 }
 <button class="btn btn-danger" @onclick="DeleteUserProfile">Slet Profil</button>
-
+<a href="/EditProfile/@AppState.UserId" class="btn btn-primary">Rediger Profil</a>
 @code {
+    private void EditProfile()
+    {
+        NavigationManager.NavigateTo($"/EditProfile/{AppState.UserId}"); // Use LoggedInUserId
+    }
     // List to store bookings fetched from the API
     List<DomainModels.Booking> bookings = new();
 
@@ -149,6 +153,7 @@ else
                 message = "Der opstod en fejl. Kontakt venligst administrator.";
             }
         }
+        
     }
 
 }

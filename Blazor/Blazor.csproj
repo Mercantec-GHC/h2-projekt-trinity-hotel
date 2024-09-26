@@ -9,6 +9,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+
+
+    <Content Remove="Components\Pages\EditProfile.razor" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Aspire.Hosting.AppHost" Version="8.2.0" />
     <PackageReference Include="Blazor.Bootstrap" Version="3.0.0" />
     <PackageReference Include="Blazorise.Bootstrap5" Version="1.6.1" />
@@ -34,6 +40,14 @@
   <ItemGroup>
     <ProjectReference Include="..\API\API.csproj" />
     <ProjectReference Include="..\DomainModels\DomainModels.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <UpToDateCheckInput Remove="Components\Pages\EditProfile.razor" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="Components\Pages\EditProfile.razor" />
   </ItemGroup>
 
 </Project>
