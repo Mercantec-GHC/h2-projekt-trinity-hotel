@@ -7,17 +7,21 @@
 
 
 <h1>Book a room</h1>
-
 <div class="mb-3">
     <label for="startDate" class="form-label">From:</label>
-    <input type="date" class="form-control" id="startDate"  @bind="booking.StartDate"  min="@booking.StartDate.ToString("yyyy-MM-dd")" />
+    <input type="date" class="form-control" id="startDate"
+           value="@booking.StartDate.ToString("yyyy-MM-dd")"
+           @oninput="@(e => OnDateChange(e, "StartDate"))"
+           min="@DateTime.Now.ToString("yyyy-MM-dd")" />
 </div>
 
 <div class="mb-3">
     <label for="endDate" class="form-label">To:</label>
-    <input type="date" class="form-control" id="endDate" @bind="booking.EndDate" min="@booking.EndDate.ToString("yyyy-MM-dd")" />
+    <input type="date" class="form-control" id="endDate"
+           value="@booking.EndDate.ToString("yyyy-MM-dd")"
+           @oninput="@(e => OnDateChange(e, "EndDate"))"
+           min="@DateTime.Now.ToString("yyyy-MM-dd")" />
 </div>
-<button class="btn btn-link" @onclick="() => OnDateChange()"> check </button>
 
 
 <div class="mb-3">
@@ -77,16 +81,6 @@
     }
     private List<room_booking> roomBookings = new List<room_booking>();
 
-    /*
-    var bookings = _hotelContext.Bookings.ToArray();
-    var existingBookings = _hotelContext.Bookings
-            .Where(b => b.RoomId == booking.RoomId &&
-                ((booking.StartDate >= b.StartDate && booking.StartDate < b.EndDate) ||
-                 (booking.EndDate > b.StartDate && booking.EndDate <= b.EndDate) ||
-    (booking.StartDate <= b.StartDate && booking.EndDate >= b.EndDate)))
-                .ToList();
-
-     */
 
     protected override async Task OnInitializedAsync()
     {
@@ -118,11 +112,15 @@
                 };
             roomBookings.Add(roomBooking);
         }
+
+        updateRoomBook();
+
         StateHasChanged();
     }
 
-    private async Task OnDateChange()
+    private void updateRoomBook()
     {
+
         var existingBookings = Bookings
             .Where(b =>
                 (booking.StartDate >= b.StartDate && booking.StartDate < b.EndDate) ||
@@ -146,6 +144,27 @@
         }
         StateHasChanged();
 
+    }
+
+    private async Task OnDateChange(ChangeEventArgs e, string type)
+    {
+        //Get date from input
+        
+        if (DateTime.TryParse(e.Value?.ToString(), out DateTime newDate))
+        {
+            if (type == "StartDate")
+                booking.StartDate = newDate;
+            else
+                booking.EndDate = newDate;
+
+        }
+        else
+        {
+            errorMessage = "Error parsing date";
+            return;
+        }
+        
+        updateRoomBook();
     }
 
 
