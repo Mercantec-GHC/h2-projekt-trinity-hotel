@@ -3,6 +3,7 @@
 @using System.Globalization
 @inject HttpClient HttpClient
 @inject NavigationManager NavManager
+@inject AppState AppState
 
 
 <h3>Edit Booking</h3>
@@ -46,6 +47,9 @@ else
     // This method is called when the component is initialized
     protected override async Task OnInitializedAsync()
     {
+        //check permission else redirect to start page
+        if (!AppState.LoggedIn || !AppState.IsAdmin) NavManager.NavigateTo("/");
+
         await GetBooking();
     }
 

@@ -5,78 +5,76 @@
 
 <PageTitle>Book a room</PageTitle>
 
+
 <h1>Book a room</h1>
 
-@if (!bookingCompleted)
-{
-    <div class="mb-3">
-        <label for="startDate" class="form-label">From:</label>
-        <input type="date" class="form-control" id="startDate" @bind="booking.StartDate" min="@DateTime.UtcNow.ToString("yyyy-MM-dd")" />
-    </div>
+<div class="mb-3">
+    <label for="startDate" class="form-label">From:</label>
+    <input type="date" class="form-control" id="startDate" @bind="booking.StartDate" min="@booking.StartDate.ToString("yyyy-MM-dd")" />
+</div>
 
-    <div class="mb-3">
-        <label for="endDate" class="form-label">To:</label>
-        <input type="date" class="form-control" id="endDate" @bind="booking.EndDate" min="@booking.StartDate.AddDays(1).ToString("yyyy-MM-dd")" />
-    </div>
+<div class="mb-3">
+    <label for="endDate" class="form-label">To:</label>
+    <input type="date" class="form-control" id="endDate" @bind="booking.EndDate" min="@booking.EndDate.ToString("yyyy-MM-dd")" />
+</div>
 
-    <div class="mb-3">
-        <label for="roomType" class="form-label">Room Type:</label>
-        <select class="form-select" id="roomType" @bind="selectedRoomType">
-            <option value="">Choose desired room type</option>
-            @foreach (var room in availableRooms)
-            {
-                <option value="@room.RoomId">@GetRoomTypeName(room.Type) (@room.Price DKK per night)</option>
-            }
-        </select>
-    </div>
 
-    <button class="btn btn-primary" @onclick="FinishBooking">Book Now</button>
-}
-else
-{
-    @if (bookingSuccessful)
-    {
-        <h2>Booking Confirmation:</h2>
-        <p>Room type and cost: @GetRoomTypeName(selectedRoom.Type) (@selectedRoom.Price DKK per night)</p>
-        <p>From: @booking.StartDate.ToShortDateString()</p>
-        <p>To: @booking.EndDate.ToShortDateString()</p>
-        <button class="btn btn-primary" @onclick="ResetBooking">Create another booking</button>
+<div class="mb-3">
+ @if (errorMessage== ""){
+    @if (Rooms.Count > 0){
+        @foreach (var room in Rooms)
+        {
+            <div style="outline: 3px solid black; width:25%;">
+                <p>@GetRoomTypeName(room.Type)</p>
+                <p>@room.Price</p>
+                <button class="btn btn-link" @onclick="() => FinishBooking(room.RoomId)"> book </button>
+            </div>
+        }
     }
     else
     {
+            <p>Loading...</p>
+        }
+
+    }
+    else
+    {
+
         <h2>Booking Failed</h2>
         <p>@errorMessage</p>
-        <button class="btn btn-primary" @onclick="ResetBooking">Try Again</button>
     }
-}
+
+</div>
+
+
+
 
 @code {
     private DomainModels.Booking booking = new DomainModels.Booking();
-    private List<DomainModels.Room> availableRooms = new List<DomainModels.Room>();
-    private int selectedRoomType;
-    private DomainModels.Room selectedRoom;
-    private bool bookingCompleted = false;
-    private bool bookingSuccessful = false;
+    private List<DomainModels.Room> Rooms = new List<DomainModels.Room>();
+    private DomainModels.Room? selectedRoom;
     private string errorMessage = "";
+    public bool bookingCompleted = false;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadAvailableRooms();
+        LoadRooms();
         booking.StartDate = DateTime.UtcNow;
         booking.EndDate = DateTime.UtcNow.AddDays(1);
     }
 
-    private async Task LoadAvailableRooms()
+    private async Task LoadRooms()
     {
         try
         {
-            availableRooms = await HttpClient.GetFromJsonAsync<List<DomainModels.Room>>("api/Rooms/types") ?? new List<DomainModels.Room>();
+            Rooms = await HttpClient.GetFromJsonAsync<List<DomainModels.Room>>("api/Rooms") ?? new List<DomainModels.Room>();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading rooms: {ex.Message}");
             // Handle error (e.g., show a message to the user)
         }
+        StateHasChanged();
     }
 
     private string GetRoomTypeName(int type)
@@ -92,22 +90,13 @@ else
         };
     }
 
-    private async Task FinishBooking()
+    private async Task FinishBooking(int selectedRoomId)
     {
-        if (GetRoomTypeName(selectedRoomType) == "Unkown")
-        {
-            errorMessage = "Please fill in all required fields.";
-            bookingCompleted = true;
-            bookingSuccessful = false;
-            return;
-        }
 
-        selectedRoom = availableRooms.FirstOrDefault(r => r.RoomId == selectedRoomType);
+        selectedRoom = Rooms.FirstOrDefault(r => r.RoomId == selectedRoomId);
         if (selectedRoom == null)
         {
             errorMessage = "Invalid room selection.";
-            bookingCompleted = true;
-            bookingSuccessful = false;
             return;
         }
 
@@ -119,33 +108,17 @@ else
             var response = await HttpClient.PostAsJsonAsync("api/Bookings/add", booking);
             if (response.IsSuccessStatusCode)
             {
-                bookingSuccessful = true;
+                NavManager.NavigateTo("/profilepage");
             }
             else
             {
                 errorMessage = await response.Content.ReadAsStringAsync();
-                bookingSuccessful = false;
             }
         }
         catch (Exception ex)
         {
             errorMessage = $"An error occurred: {ex.Message}";
-            bookingSuccessful = false;
         }
-
-        bookingCompleted = true;
     }
 
-    private void ResetBooking()
-    {
-        booking = new DomainModels.Booking
-            {
-                StartDate = DateTime.UtcNow,
-                EndDate = DateTime.UtcNow.AddDays(1)
-            };
-        selectedRoomType = 0;
-        bookingCompleted = false;
-        bookingSuccessful = false;
-        errorMessage = "";
-    }
 }
