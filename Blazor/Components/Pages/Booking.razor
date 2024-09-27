@@ -7,6 +7,7 @@
 
 
 <h1>Book a room</h1>
+
 <div class="mb-3">
     <label for="startDate" class="form-label">From:</label>
     <input type="date" class="form-control" id="startDate"
@@ -24,16 +25,20 @@
 </div>
 
 
+
 <div class="mb-3">
- @if (errorMessage== ""){
-    @if (Rooms.Count > 0){
-            @foreach (var roomBook in roomBookings)
+    @if (errorMessage == "")
+    {
+        @if (Rooms.Count > 0)
         {
-                @if (roomBook.isBooked == false){
-                     <div style="outline: 3px solid black; width:25%;">
-                    <p>@GetRoomTypeName(roomBook.Room.Type)</p>
-                    <p>@roomBook.Room.Price</p>
-                    <button class="btn btn-link" @onclick="() => FinishBooking(roomBook.Room.RoomId)"> book </button>
+            @foreach (var roomBook in roomBookings)
+            {
+                @if (roomBook.isBooked == false)
+                {
+                    <div style="outline: 3px solid black; width:25%;">
+                        <p>@GetRoomTypeName(roomBook.Room.Type)</p>
+                        <p>@roomBook.Room.Price</p>
+                        <button class="btn btn-link" @onclick="() => FinishBooking(roomBook.Room.RoomId)"> book </button>
                     </div>
                 }
                 else
@@ -45,11 +50,11 @@
                     </div>
                 }
             }
-    }
-    else
-    {
+        }
+        else
+        {
             <p>Loading...</p>
-    }
+        }
 
     }
     else
@@ -80,6 +85,16 @@
         public bool isBooked;
     }
     private List<room_booking> roomBookings = new List<room_booking>();
+
+
+
+
+
+
+
+
+
+
 
 
     protected override async Task OnInitializedAsync()
@@ -149,7 +164,7 @@
     private async Task OnDateChange(ChangeEventArgs e, string type)
     {
         //Get date from input
-        
+
         if (DateTime.TryParse(e.Value?.ToString(), out DateTime newDate))
         {
             if (type == "StartDate")
@@ -163,7 +178,7 @@
             errorMessage = "Error parsing date";
             return;
         }
-        
+
         updateRoomBook();
     }
 
@@ -188,7 +203,7 @@
         booking.RoomId = selectedRoomId;
         booking.UserId = AppState.UserId; // Assuming a default user ID for now
 
-                                          // Convert StartDate and EndDate to UTC
+        // Convert StartDate and EndDate to UTC
         booking.StartDate = booking.StartDate.ToUniversalTime();
         booking.EndDate = booking.EndDate.ToUniversalTime();
 

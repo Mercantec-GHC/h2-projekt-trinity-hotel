@@ -48,7 +48,7 @@ else
     protected override async Task OnInitializedAsync()
     {
         //check permission else redirect to start page
-        if (!AppState.LoggedIn || !AppState.IsAdmin) NavManager.NavigateTo("/");
+        if (!AppState.LoggedIn || !AppState.IsAdmin) NavManager.NavigateTo($"/editbooking/{BookingId}");
 
         await GetBooking();
     }
