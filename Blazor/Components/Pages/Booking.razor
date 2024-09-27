@@ -99,9 +99,10 @@
 
     protected override async Task OnInitializedAsync()
     {
-        LoadData();
+
         booking.StartDate = DateTime.UtcNow;
         booking.EndDate = DateTime.UtcNow.AddDays(1);
+        LoadData();
     }
 
     private async Task LoadData()
@@ -143,13 +144,21 @@
                 (booking.StartDate <= b.StartDate && booking.EndDate >= b.EndDate))
             .ToList();
 
+        for (int i = 0; i < roomBookings.Count; i++)
+        {
+            var rb = roomBookings[i];
+            rb.isBooked = false;
+            roomBookings[i] = rb;
+
+        }
+
+
         foreach (var b in existingBookings)
         {
 
             for (int i = 0; i < roomBookings.Count; i++)
             {
                 var rb = roomBookings[i];
-                rb.isBooked = false;
                 if (rb.Room.RoomId == b.RoomId)
                 {
                     rb.isBooked = true;
