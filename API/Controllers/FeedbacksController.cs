@@ -48,5 +48,21 @@ namespace API.Controllers
 				return NotFound();
 			}
 		}
-	}
+
+        // Delete a Feedback
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteFeedback(int id)
+        {
+            var feedback = await _hotelContext.Feedbacks.FindAsync(id);
+            if (feedback == null)
+            {
+                return NotFound();
+            }
+
+            _hotelContext.Feedbacks.Remove(feedback);
+            await _hotelContext.SaveChangesAsync();
+
+            return NoContent();
+        }
+    }
 }
