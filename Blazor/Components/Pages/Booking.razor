@@ -7,34 +7,49 @@
 
 
 <h1>Book a room</h1>
-
 <div class="mb-3">
     <label for="startDate" class="form-label">From:</label>
-    <input type="date" class="form-control" id="startDate" @bind="booking.StartDate" min="@booking.StartDate.ToString("yyyy-MM-dd")" />
+    <input type="date" class="form-control" id="startDate"
+           value="@booking.StartDate.ToString("yyyy-MM-dd")"
+           @oninput="@(e => OnDateChange(e, "StartDate"))"
+           min="@DateTime.Now.ToString("yyyy-MM-dd")" />
 </div>
 
 <div class="mb-3">
     <label for="endDate" class="form-label">To:</label>
-    <input type="date" class="form-control" id="endDate" @bind="booking.EndDate" min="@booking.EndDate.ToString("yyyy-MM-dd")" />
+    <input type="date" class="form-control" id="endDate"
+           value="@booking.EndDate.ToString("yyyy-MM-dd")"
+           @oninput="@(e => OnDateChange(e, "EndDate"))"
+           min="@DateTime.Now.ToString("yyyy-MM-dd")" />
 </div>
 
 
 <div class="mb-3">
  @if (errorMessage== ""){
     @if (Rooms.Count > 0){
-        @foreach (var room in Rooms)
+            @foreach (var roomBook in roomBookings)
         {
-            <div style="outline: 3px solid black; width:25%;">
-                <p>@GetRoomTypeName(room.Type)</p>
-                <p>@room.Price</p>
-                <button class="btn btn-link" @onclick="() => FinishBooking(room.RoomId)"> book </button>
-            </div>
-        }
+                @if (roomBook.isBooked == false){
+                     <div style="outline: 3px solid black; width:25%;">
+                    <p>@GetRoomTypeName(roomBook.Room.Type)</p>
+                    <p>@roomBook.Room.Price</p>
+                    <button class="btn btn-link" @onclick="() => FinishBooking(roomBook.Room.RoomId)"> book </button>
+                    </div>
+                }
+                else
+                {
+                    <div style="outline: 3px solid red; width:25%;">
+                        <p>@GetRoomTypeName(roomBook.Room.Type)</p>
+                        <p>@roomBook.Room.Price</p>
+                        <p>Already booked for selected date</p>
+                    </div>
+                }
+            }
     }
     else
     {
             <p>Loading...</p>
-        }
+    }
 
     }
     else
@@ -42,6 +57,8 @@
 
         <h2>Booking Failed</h2>
         <p>@errorMessage</p>
+        <button class="btn btn-link" @onclick="@(() => errorMessage="")">Ok</button>
+
     }
 
 </div>
@@ -52,30 +69,105 @@
 @code {
     private DomainModels.Booking booking = new DomainModels.Booking();
     private List<DomainModels.Room> Rooms = new List<DomainModels.Room>();
+    private List<DomainModels.Booking> Bookings = new List<DomainModels.Booking>();
+    private List<DomainModels.Booking> existingBookings = new List<DomainModels.Booking>();
     private DomainModels.Room? selectedRoom;
     private string errorMessage = "";
     public bool bookingCompleted = false;
+    public struct room_booking
+    {
+        public DomainModels.Room Room;
+        public bool isBooked;
+    }
+    private List<room_booking> roomBookings = new List<room_booking>();
+
 
     protected override async Task OnInitializedAsync()
     {
-        LoadRooms();
+        LoadData();
         booking.StartDate = DateTime.UtcNow;
         booking.EndDate = DateTime.UtcNow.AddDays(1);
     }
 
-    private async Task LoadRooms()
+    private async Task LoadData()
     {
         try
         {
             Rooms = await HttpClient.GetFromJsonAsync<List<DomainModels.Room>>("api/Rooms") ?? new List<DomainModels.Room>();
+            Bookings = await HttpClient.GetFromJsonAsync<List<DomainModels.Booking>>("api/Bookings/all") ?? new List<DomainModels.Booking>();
+
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading rooms: {ex.Message}");
             // Handle error (e.g., show a message to the user)
         }
+
+        foreach (var room in Rooms)
+        {
+            room_booking roomBooking = new room_booking
+                {
+                    Room = room,
+                    isBooked = false
+                };
+            roomBookings.Add(roomBooking);
+        }
+
+        updateRoomBook();
+
         StateHasChanged();
     }
+
+    private void updateRoomBook()
+    {
+
+        var existingBookings = Bookings
+            .Where(b =>
+                (booking.StartDate >= b.StartDate && booking.StartDate < b.EndDate) ||
+                (booking.EndDate > b.StartDate && booking.EndDate <= b.EndDate) ||
+                (booking.StartDate <= b.StartDate && booking.EndDate >= b.EndDate))
+            .ToList();
+
+        foreach (var b in existingBookings)
+        {
+
+            for (int i = 0; i < roomBookings.Count; i++)
+            {
+                var rb = roomBookings[i];
+                rb.isBooked = false;
+                if (rb.Room.RoomId == b.RoomId)
+                {
+                    rb.isBooked = true;
+                }
+                roomBookings[i] = rb;
+            }
+        }
+        StateHasChanged();
+
+    }
+
+    private async Task OnDateChange(ChangeEventArgs e, string type)
+    {
+        //Get date from input
+        
+        if (DateTime.TryParse(e.Value?.ToString(), out DateTime newDate))
+        {
+            if (type == "StartDate")
+                booking.StartDate = newDate;
+            else
+                booking.EndDate = newDate;
+
+        }
+        else
+        {
+            errorMessage = "Error parsing date";
+            return;
+        }
+        
+        updateRoomBook();
+    }
+
+
 
     private string GetRoomTypeName(int type)
     {
