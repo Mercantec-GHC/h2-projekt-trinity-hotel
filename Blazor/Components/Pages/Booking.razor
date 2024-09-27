@@ -12,16 +12,14 @@
     <label for="startDate" class="form-label">From:</label>
     <input type="date" class="form-control" id="startDate"
            value="@booking.StartDate.ToString("yyyy-MM-dd")"
-           @oninput="@(e => OnDateChange(e, "StartDate"))"
-           min="@DateTime.Now.ToString("yyyy-MM-dd")" />
+           @oninput="@(e => OnDateChange(e, "StartDate"))"/>
 </div>
 
 <div class="mb-3">
     <label for="endDate" class="form-label">To:</label>
     <input type="date" class="form-control" id="endDate"
            value="@booking.EndDate.ToString("yyyy-MM-dd")"
-           @oninput="@(e => OnDateChange(e, "EndDate"))"
-           min="@DateTime.Now.ToString("yyyy-MM-dd")" />
+           @oninput="@(e => OnDateChange(e, "EndDate"))" />
 </div>
 
 
@@ -177,9 +175,9 @@
         if (DateTime.TryParse(e.Value?.ToString(), out DateTime newDate))
         {
             if (type == "StartDate")
-                booking.StartDate = newDate;
+                booking.StartDate = DateTime.SpecifyKind(newDate, DateTimeKind.Utc);
             else
-                booking.EndDate = newDate;
+                booking.EndDate = DateTime.SpecifyKind(newDate, DateTimeKind.Utc);
 
         }
         else
@@ -212,9 +210,12 @@
         booking.RoomId = selectedRoomId;
         booking.UserId = AppState.UserId; // Assuming a default user ID for now
 
+
         // Convert StartDate and EndDate to UTC
-        booking.StartDate = booking.StartDate.ToUniversalTime();
-        booking.EndDate = booking.EndDate.ToUniversalTime();
+        
+        
+        booking.StartDate = booking.StartDate;
+        booking.EndDate = booking.EndDate;
 
         try
         {
