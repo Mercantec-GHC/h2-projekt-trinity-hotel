@@ -84,6 +84,7 @@ namespace API.Controllers
             var newbooking = new Booking
             {
                 UserId = booking.UserId,
+                RoomId = booking.RoomId,
                 StartDate = DateTime.SpecifyKind(booking.StartDate, DateTimeKind.Utc).Date,
                 EndDate = DateTime.SpecifyKind(booking.EndDate, DateTimeKind.Utc).Date
             };

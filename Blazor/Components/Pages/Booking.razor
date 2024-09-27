@@ -185,14 +185,7 @@
     private async Task FinishBooking(int selectedRoomId)
     {
 
-        selectedRoom = Rooms.FirstOrDefault(r => r.RoomId == selectedRoomId);
-        if (selectedRoom == null)
-        {
-            errorMessage = "Invalid room selection.";
-            return;
-        }
-
-        booking.RoomId = selectedRoom.RoomId;
+        booking.RoomId = selectedRoomId;
         booking.UserId = AppState.UserId; // Assuming a default user ID for now
 
                                           // Convert StartDate and EndDate to UTC
