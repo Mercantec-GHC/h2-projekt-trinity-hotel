@@ -31,22 +31,23 @@
         {
             @foreach (var roomBook in roomBookings)
             {
-                @if (roomBook.isBooked == false)
-                {
-                    <div style="outline: 3px solid black; width:25%;">
-                        <p>@GetRoomTypeName(roomBook.Room.Type)</p>
-                        <p>@roomBook.Room.Price</p>
-                        <button class="btn btn-link" @onclick="() => FinishBooking(roomBook.Room.RoomId)"> book </button>
-                    </div>
-                }
-                else
-                {
-                    <div style="outline: 3px solid red; width:25%;">
-                        <p>@GetRoomTypeName(roomBook.Room.Type)</p>
-                        <p>@roomBook.Room.Price</p>
-                        <p>Already booked for selected date</p>
-                    </div>
-                }
+                <div class="card mt-3" style="width:15vw;height:20vh;float:left;margin:0.5vw;">
+                    <div class="card-body">
+
+                    <p>@GetRoomTypeName(roomBook.Room.Type)</p>
+                    <p>@roomBook.Room.Price DKK</p>
+                    
+                    @if (roomBook.isBooked == false)
+                    {
+                        <button class="btn btn-dark" @onclick="() => FinishBooking(roomBook.Room.RoomId)"> book </button>
+                    }else{
+                        <button class="btn btn-danger"> unavailable </button>
+                    }
+                    
+                </div>
+
+                </div>
+
             }
         }
         else
@@ -178,7 +179,6 @@
                 booking.StartDate = DateTime.SpecifyKind(newDate, DateTimeKind.Utc);
             else
                 booking.EndDate = DateTime.SpecifyKind(newDate, DateTimeKind.Utc);
-
         }
         else
         {
