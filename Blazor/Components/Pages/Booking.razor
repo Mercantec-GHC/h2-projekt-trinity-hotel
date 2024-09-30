@@ -114,6 +114,14 @@
 
     protected override void OnInitialized()
     {
+        if (AppState.IsAdmin && AppState.LoggedIn)
+        {
+
+        }
+        else
+        {
+            user_id = null; // dont allow normal users to change it
+        }
         booking.StartDate = DateTime.UtcNow;
         booking.EndDate = DateTime.UtcNow.AddDays(1);
         LoadData();
