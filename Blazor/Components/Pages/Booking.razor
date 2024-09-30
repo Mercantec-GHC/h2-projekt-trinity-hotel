@@ -1,4 +1,5 @@
-﻿@page "/booking"
+﻿@page "/booking/{user_id:int?}"
+
 @inject AppState AppState
 @inject HttpClient HttpClient
 @inject NavigationManager NavManager
@@ -22,16 +23,17 @@
            @oninput="@(e => OnDateChange(e, "EndDate"))" />
 </div>
 
-
-
-<div class="mb-3">
     @if (errorMessage == "")
     {
         @if (Rooms.Count > 0)
         {
+        <button class="btn btn-dark" @onclick="() => sort_rooms()"> Sort by price </button>
+
+        <div class="mb-3">
+
             @foreach (var roomBook in roomBookings)
             {
-                <div class="card mt-3" style="width:15vw;height:20vh;float:left;margin:0.5vw;">
+                <div class="card mt-3" style="width:15vw;height:20vh;float:left;margin-right:0.5vw; margin-bottom:0.5vw;">
                     <div class="card-body">
 
                     <p>@GetRoomTypeName(roomBook.Room.Type)</p>
@@ -49,6 +51,8 @@
                 </div>
 
             }
+        </div>
+
         }
         else
         {
@@ -65,7 +69,6 @@
 
     }
 
-</div>
 
 
 
@@ -85,20 +88,32 @@
     }
     private List<room_booking> roomBookings = new List<room_booking>();
 
+    private bool sort_decreasing = false;
+
+    [Parameter]
+    public int? user_id { get; set; }
 
 
 
 
-
-
-
-
-
-
-
-    protected override async Task OnInitializedAsync()
+    private void sort_rooms()
     {
+        if (sort_decreasing)
+        {
+            roomBookings = roomBookings.OrderByDescending(rb => rb.Room.Price).ToList();
+        }
+        else
+        {
+            roomBookings = roomBookings.OrderBy(rb => rb.Room.Price).ToList();
+        }
+        sort_decreasing = !sort_decreasing;
+    }
 
+
+
+
+    protected override void OnInitialized()
+    {
         booking.StartDate = DateTime.UtcNow;
         booking.EndDate = DateTime.UtcNow.AddDays(1);
         LoadData();
@@ -208,7 +223,7 @@
     {
 
         booking.RoomId = selectedRoomId;
-        booking.UserId = AppState.UserId; // Assuming a default user ID for now
+        booking.UserId = user_id ?? AppState.UserId; // user ID
 
 
         // Convert StartDate and EndDate to UTC
