@@ -1,5 +1,6 @@
 ﻿@page "/booking/{user_id:int?}"
-
+@using DomainModels
+@inject Services.MailServices MailServices
 @inject AppState AppState
 @inject HttpClient HttpClient
 @inject NavigationManager NavManager
@@ -74,6 +75,7 @@
 
 
 @code {
+    private User user = new User();
     private DomainModels.Booking booking = new DomainModels.Booking();
     private List<DomainModels.Room> Rooms = new List<DomainModels.Room>();
     private List<DomainModels.Booking> Bookings = new List<DomainModels.Booking>();
@@ -108,9 +110,6 @@
         }
         sort_decreasing = !sort_decreasing;
     }
-
-
-
 
     protected override void OnInitialized()
     {
@@ -242,15 +241,27 @@
 
         try
         {
+            // Fetch user details
+            user = await HttpClient.GetFromJsonAsync<User>($"api/Users/{booking.UserId}");
+            if (user == null)
+            {
+                errorMessage = "User not found.";
+                return;
+            }
+
             var response = await HttpClient.PostAsJsonAsync("api/Bookings/add", booking);
             if (response.IsSuccessStatusCode)
             {
+                // Send confirmation email
+                await MailServices.SendEmail(user.Email, "Booking Confirmation", "Your booking was successful!");
+
                 if (AppState.UserId == user_id) // booking for yourself
                     NavManager.NavigateTo("/profilepage");
                 else if (AppState.LoggedIn && AppState.IsAdmin) // booking for other user
                     NavManager.NavigateTo("/upcomingbookings");
                 else // something went wrong?
                     NavManager.NavigateTo("/");
+
             }
             else
             {
