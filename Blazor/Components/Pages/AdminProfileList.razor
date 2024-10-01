@@ -39,7 +39,10 @@ else
                     <td>@user.Email</td>
                     <td>
                         <a href="@($"/admin-edit-profile/{user.UserId}")" class="btn btn-primary">Edit</a>
+                        <a href="@($"/booking/{user.UserId}")" class="btn btn-primary">Book</a>
+
                     </td>
+                
                 </tr>
             }
         </tbody>
