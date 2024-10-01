@@ -235,8 +235,8 @@
 
 
         // Convert StartDate and EndDate to UTC
-        
-        
+
+
         booking.StartDate = booking.StartDate;
         booking.EndDate = booking.EndDate;
 
@@ -245,7 +245,12 @@
             var response = await HttpClient.PostAsJsonAsync("api/Bookings/add", booking);
             if (response.IsSuccessStatusCode)
             {
-                NavManager.NavigateTo("/profilepage");
+                if (AppState.UserId == user_id) // booking for yourself
+                    NavManager.NavigateTo("/profilepage");
+                else if (AppState.LoggedIn && AppState.IsAdmin) // booking for other user
+                    NavManager.NavigateTo("/upcomingbookings");
+                else // something went wrong?
+                    NavManager.NavigateTo("/");
             }
             else
             {
