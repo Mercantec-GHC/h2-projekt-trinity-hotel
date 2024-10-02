@@ -14,7 +14,7 @@
     <label for="startDate" class="form-label">From:</label>
     <input type="date" class="form-control" id="startDate"
            value="@booking.StartDate.ToString("yyyy-MM-dd")"
-           @oninput="@(e => OnDateChange(e, "StartDate"))"/>
+           @oninput="@(e => OnDateChange(e, "StartDate"))" />
 </div>
 
 <div class="mb-3">
@@ -24,51 +24,53 @@
            @oninput="@(e => OnDateChange(e, "EndDate"))" />
 </div>
 
-    @if (errorMessage == "")
+@if (errorMessage == "")
+{
+    @if (Rooms.Count > 0)
     {
-        @if (Rooms.Count > 0)
-        {
         <button class="btn btn-dark" @onclick="() => sort_rooms()"> Sort by price </button>
 
         <div class="mb-3">
 
             @foreach (var roomBook in roomBookings)
             {
-                <div class="card mt-3" style="width:15vw;height:20vh;float:left;margin-right:0.5vw; margin-bottom:0.5vw;">
+                <div class="card mt-3" style="width:20vw;height:40vh;float:left;margin-right:0.5vw; margin-bottom:5vw;">
                     <div class="card-body">
+                        <img src="@GetRoomImageLink(roomBook.Room.Type)"
+                             alt="@GetRoomTypeName(roomBook.Room.Type)"
+                             class="card-img-top" />
 
-                    <p>@GetRoomTypeName(roomBook.Room.Type)</p>
-                    <p>@roomBook.Room.Price DKK</p>
-                    
-                    @if (roomBook.isBooked == false)
-                    {
-                        <button class="btn btn-dark" @onclick="() => FinishBooking(roomBook.Room.RoomId)"> book </button>
-                    }else{
-                        <button class="btn btn-danger"> unavailable </button>
-                    }
-                    
+                        <p>@GetRoomTypeName(roomBook.Room.Type)</p>
+                        <p>@roomBook.Room.Price DKK</p>
+
+                        @if (roomBook.isBooked == false)
+                        {
+                            <button class="btn btn-dark" @onclick="() => FinishBooking(roomBook.Room.RoomId)"> Book </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-danger"> Unavailable </button>
+                        }
+                    </div>
                 </div>
-
-                </div>
-
             }
         </div>
-
-        }
-        else
-        {
-            <p>Loading...</p>
-        }
 
     }
     else
     {
-
-        <h2>Booking Failed</h2>
-        <p>@errorMessage</p>
-        <button class="btn btn-link" @onclick="@(() => errorMessage="")">Ok</button>
-
+        <p>Loading...</p>
     }
+
+}
+else
+{
+
+    <h2>Booking Failed</h2>
+    <p>@errorMessage</p>
+    <button class="btn btn-link" @onclick="@(() => errorMessage="")">Ok</button>
+
+}
 
 
 
@@ -273,5 +275,20 @@
             errorMessage = $"An error occurred: {ex.Message}";
         }
     }
+    @code {
+        private string GetRoomImageLink(int roomType)
+        {
+            return roomType switch
+            {
+                0 => "https://i.ibb.co/TPBZHQ9/image.jpg",
+                1 => "https://i.ibb.co/gmvh7dK/1.jpg",
+                2 => "https://i.ibb.co/VjdLzrP/2.jpg",
+                3 => "https://i.ibb.co/bL1TNNs/3.jpg",
+                4 => "https://i.ibb.co/Y3rtKtm/4.jpg",
+                _ => "Not Found",
+            };
+        }
+    }
+
 
 }
