@@ -1,0 +1,131 @@
+﻿/* home.css */
+
+/* General Styles */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f8f9fa;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+h1, h3 {
+    color: #003366;
+    text-align: center;
+}
+
+p {
+    line-height: 1.6;
+    margin: 0 20px;
+}
+
+/* Header Section */
+h3 {
+    font-size: 1.8em;
+    margin-top: 1em;
+}
+
+/* Welcome Section */
+.welcome {
+    text-align: center;
+    margin: 2em auto;
+    max-width: 800px;
+    font-size: 1.1em;
+}
+
+/* Room Details Section */
+.carousel-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 2em 0;
+    border: 1px solid #ccc;
+    padding: 1em;
+    border-radius: 10px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+}
+
+.carousel-text {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 1em;
+}
+
+.room-price {
+    font-weight: bold;
+    color: #cc0000;
+    font-size: 1.2em;
+}
+
+.carousel-images {
+    width: 100%;
+    max-width: 800px;
+    display: flex;
+    justify-content: center;
+}
+
+.carousel-image {
+    width: 100%;
+    border-radius: 5px;
+    max-width: 600px;
+}
+
+/* Carousel Navigation */
+.carousel {
+    position: relative;
+    display: flex;
+    overflow: hidden;
+}
+
+.carousel-slide {
+    flex: 1;
+    transition: transform 0.5s ease-in-out;
+}
+
+.carousel img {
+    width: 100%;
+    border-radius: 10px;
+}
+
+/* Additional Info Styles */
+.details-container {
+    padding: 20px;
+    background-color: #f0f8ff;
+    border-radius: 5px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.details-text {
+    margin-top: 20px;
+}
+
+/* Footer */
+.footer {
+    background-color: #003366;
+    color: white;
+    padding: 10px 0;
+    text-align: center;
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .carousel-container {
+        margin: 1em 0;
+    }
+
+    h1, h3 {
+        font-size: 1.5em;
+    }
+
+    p {
+        font-size: 1em;
+    }
+
+    .room-price {
+        font-size: 1em;
+    }
+}
