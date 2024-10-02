@@ -255,7 +255,14 @@ else
             if (response.IsSuccessStatusCode)
             {
                 // Send confirmation email
-                await MailServices.SendEmail(user.Email, "Booking Confirmation", "Your booking was successful!");
+                int maxBookingId = await (await HttpClient.GetAsync("api/Bookings/max-booking-id")).Content.ReadFromJsonAsync<int>();
+
+
+                string bookingDetails = $"Booking ID: {maxBookingId}\n" +
+                                                    $"Room ID: {booking.RoomId}\n" +
+                                                    $"Check-in: {booking.StartDate.ToLocalTime().ToShortDateString()}\n" +
+                                                    $"Check-out: {booking.EndDate.ToLocalTime().ToShortDateString()}";
+                await MailServices.SendEmail(user.Email, "Booking Confirmation", bookingDetails);
 
                 if (AppState.UserId == user_id) // booking for yourself
                     NavManager.NavigateTo("/profilepage");

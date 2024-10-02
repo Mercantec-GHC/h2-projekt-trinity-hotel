@@ -191,5 +191,15 @@ namespace API.Controllers
             return Ok(booking);
         }
 
+        [HttpGet("max-booking-id")]
+        public async Task<ActionResult<int>> GetMaxBookingId()
+        {
+            // Get the maximum BookingId from the database
+            var maxBookingId = await _hotelContext.Bookings.MaxAsync(b => b.BookingId);
+
+            return Ok(maxBookingId);
+        }
+
+
     }
 }
