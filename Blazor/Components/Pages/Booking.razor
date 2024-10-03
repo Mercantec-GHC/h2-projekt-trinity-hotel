@@ -231,6 +231,12 @@ else
     private async Task FinishBooking(int selectedRoomId)
     {
 
+        if (!AppState.LoggedIn)
+        {
+            NavManager.NavigateTo("/create-profile");
+
+        }
+
         booking.RoomId = selectedRoomId;
         booking.UserId = user_id ?? AppState.UserId; // user ID
 
@@ -264,7 +270,7 @@ else
                                                     $"Check-out: {booking.EndDate.ToLocalTime().ToShortDateString()}";
                 await MailServices.SendEmail(user.Email, "Booking Confirmation", bookingDetails);
 
-                if (AppState.UserId == user_id) // booking for yourself
+                if (AppState.UserId == booking.UserId) // booking for yourself
                     NavManager.NavigateTo("/profilepage");
                 else if (AppState.LoggedIn && AppState.IsAdmin) // booking for other user
                     NavManager.NavigateTo("/upcomingbookings");
