@@ -8,9 +8,13 @@
 <h3>Upcoming Bookings</h3>
 <button @onclick=UpdateBookings>Update</button>
 
-@if (bookings != null && bookings.Any())
+<div class="form-group">
+    <input type="text" class="form-control" placeholder="Search bookings..." @bind="searchTerm" @bind:event="oninput" @onkeyup="FilterBookings" />
+</div>
+
+@if (filteredBookings != null && filteredBookings.Any())
 {
-    @foreach (DomainModels.Booking booking in bookings)
+    @foreach (DomainModels.Booking booking in filteredBookings)
     {
         <div class="card">
             <div class="card-body">
@@ -32,11 +36,14 @@ else
 @code {
     // List to store bookings fetched from the API
     List<DomainModels.Booking> bookings = new();
+    List<DomainModels.Booking> filteredBookings = new();
 
     private Dictionary<int, string> userNames = new();
 
     // Message for error or status display
     string message = "";
+
+    private string searchTerm = "";
 
     // Called when the page initializes
     protected override async Task OnInitializedAsync()
@@ -60,6 +67,7 @@ else
             {
                 // Deserialize response to List<DomainModels.Booking>
                 bookings = await response.Content.ReadFromJsonAsync<List<DomainModels.Booking>>() ?? new List<DomainModels.Booking>();
+                filteredBookings = bookings;
                 message = "Bookings updated successfully.";
             }
             else
@@ -110,6 +118,17 @@ else
             Console.WriteLine($"User ID {userId} not found in userNames dictionary.");
             return "Unknown User";
         }
+    }
+
+    // Method to filter bookings based on search term
+    private void FilterBookings()
+    {
+        filteredBookings = bookings.Where(b =>
+            b.RoomId.ToString().Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+            b.UserId.ToString().Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+            GetUserName(b.UserId).Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+            b.StartDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture).Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+            b.EndDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture).Contains(searchTerm, StringComparison.OrdinalIgnoreCase)).ToList();
     }
 }
 
