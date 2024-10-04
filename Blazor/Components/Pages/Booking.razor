@@ -259,10 +259,10 @@ else
 
 
                 string bookingDetails = $"Booking ID: {maxBookingId}\n" +
-                                                    $"Room ID: {booking.RoomId}\n" +
+                                                  $"Room ID: {booking.RoomId}\n" +
                                                     $"Check-in: {booking.StartDate.ToLocalTime().ToShortDateString()}\n" +
                                                     $"Check-out: {booking.EndDate.ToLocalTime().ToShortDateString()}";
-                await MailServices.SendEmail(user.Email, "Booking Confirmation", bookingDetails);
+                await MailServices.SendEmail(user.Email, "Booking Confirmation", bookingDetails); 
 
                 if (AppState.UserId == user_id) // booking for yourself
                     NavManager.NavigateTo("/profilepage");
