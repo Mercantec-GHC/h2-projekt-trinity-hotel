@@ -30,7 +30,7 @@
     {
         <button class="btn btn-dark" @onclick="() => sort_rooms()"> Sort by price </button>
 
-        <div class="mb-3">
+        <div class="d-flex flex-wrap justify-content-center mb-3">
 
             @foreach (var roomBook in roomBookings)
             {
@@ -61,7 +61,6 @@
     {
         <p>Loading...</p>
     }
-
 }
 else
 {
