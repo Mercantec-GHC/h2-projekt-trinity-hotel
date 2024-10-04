@@ -4,19 +4,47 @@
 @inherits LayoutComponentBase
 
 <div class="page">
-    <div class="sidebar">
-        <NavMenu />
+    <div class="top-row px-4">
+        <span class="hotel-name">Trinity Hotel</span>
+        <nav class="top-nav">
+            <a href="/">Home</a>
+            @if (!AppState.LoggedIn)
+            {
+                <a href="login">Login</a>
+                <a href="create-profile">Create Profile</a>
+            }
+            else
+            {
+                <a href="javascript:void(0)" @onclick="Logout">Logout</a>
+                <a href="profilepage">Profile Page</a>
+            }
+            <a href="booking">Booking</a>
+            <a href="contact">Contact</a>
+            <a href="feedback">Feedback</a>
+            @if (AppState.LoggedIn && AppState.IsAdmin)
+            {
+                <div class="dropdown">
+                    <button class="dropbtn">Admin Pages</button>
+                    <div class="dropdown-content">
+                        <a href="admin-profile-list">Manage Profiles</a>
+                        <a href="upcomingbookings">Upcoming Bookings</a>
+                    </div>
+                </div>
+            }
+        </nav>
     </div>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+    <div class="content-wrapper">
+        <div class="sidebar">
+            <NavMenu />
         </div>
 
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
+        <main>
+            <article class="content px-4">
+                @Body
+            </article>
+        </main>
+    </div>
 </div>
 
 <div id="blazor-error-ui">
@@ -44,8 +72,19 @@
         await AppState.InitializeStateAsync(JSRuntime);
     }
 
+    private async Task Logout()
+    {
+        await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "authToken");
+        AppState.LoggedIn = false;
+        NavigationManager.NavigateTo("/");
+    }
+
     public void Dispose()
     {
         NavigationManager.LocationChanged -= HandleLocationChanged;
     }
 }
+
+
+
+

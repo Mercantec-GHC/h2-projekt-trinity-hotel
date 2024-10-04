@@ -15,6 +15,9 @@
 
 
 <h3>Your Profile</h3>
+<button class="btn btn-danger" @onclick="DeleteUserProfile">Slet Profil</button>
+<a href="/EditProfile/@AppState.UserId" class="btn btn-primary">Rediger Profil</a>
+
 
 <!-- Check if there are bookings and display them -->
 @if (bookings != null && bookings.Any())
@@ -41,8 +44,7 @@ else
 {
     <p>@message</p>
 }
-<button class="btn btn-danger" @onclick="DeleteUserProfile">Slet Profil</button>
-<a href="/EditProfile/@AppState.UserId" class="btn btn-primary">Rediger Profil</a>
+
 @code {
     private void EditProfile()
     {
