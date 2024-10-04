@@ -7,6 +7,9 @@
     <InvariantGlobalization>false</InvariantGlobalization>
     <UserSecretsId>062624a2-0b12-4c96-8a6c-f5adcaed961d</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+
+	<!-- Disable Web.config transformation -->
+	<IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
   </PropertyGroup>
 
   <ItemGroup>
