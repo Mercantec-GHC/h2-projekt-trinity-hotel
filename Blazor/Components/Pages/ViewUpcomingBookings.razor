@@ -23,7 +23,11 @@
                 <p class="card-text">Full Name: @GetUserName(booking.UserId)</p>
                 <p class="card-text">Start Date: @booking.StartDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)</p>
                 <p class="card-text">End Date: @booking.EndDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)</p>
-                <a href="/editbooking/@booking.BookingId" class="btn btn-primary">Edit Booking</a>
+                @if (AppState.IsAdmin)
+                {
+                    <a href="/editbooking/@booking.BookingId" class="btn btn-primary">Edit Booking</a>
+                }
+                
             </div>
         </div>
     }

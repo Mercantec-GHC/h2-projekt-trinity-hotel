@@ -8,6 +8,20 @@
 
 <h3>Trinity Hotel Feedback</h3>
 
+@if (!submitFeedback)
+{
+    @if (!AppState.LoggedIn)
+    {
+        <p><br />You must be logged in to leave feedback. <a href="/login">Login here</a></p>
+    }
+    else
+    {
+        <p><br />Write your feedback</p>
+        <input type="text" @bind="newFeedback.FeedbackText" class="form-control mb-2" placeholder="Your Feedback" />
+        <button class="btn btn-dark" @onclick="SubmitFeedback">Submit</button>
+        <button class="btn btn-secondary ml-2" @onclick="CancelFeedback">Cancel</button>
+    }
+}
 
 @if (feedbacks == null)
 {
@@ -26,21 +40,6 @@ else
                 }
             </div>
         </div>
-    }
-}
-
-@if (!submitFeedback)
-{
-    @if (!AppState.LoggedIn)
-    {
-        <p><br />You must be logged in to leave feedback. <a href="/login">Login here</a></p>
-    }
-    else
-    {
-        <p><br />Write your feedback</p>
-        <input type="text" @bind="newFeedback.FeedbackText" class="form-control mb-2" placeholder="Your Feedback" />
-        <button class="btn btn-dark" @onclick="SubmitFeedback">Submit</button>
-        <button class="btn btn-secondary ml-2" @onclick="CancelFeedback">Cancel</button>
     }
 }
 
@@ -64,6 +63,7 @@ else
         {
             // Fetch feedbacks from the API (replace the endpoint with the correct one)
             feedbacks = await HttpClient.GetFromJsonAsync<List<Feedback>>("api/Feedbacks") ?? new List<Feedback>();
+            feedbacks.Reverse();
         }
         catch (Exception ex)
         {
@@ -106,11 +106,11 @@ else
     {
         if (!string.IsNullOrWhiteSpace(newFeedback.FeedbackText))
         {
+      
             try
             {
                 newFeedback.UserId = AppState.UserId; // Get the logged-in user's ID
 
-                // Submit the new feedback to the API (replace the endpoint with the correct one)
                 var response = await HttpClient.PostAsJsonAsync("api/Feedbacks", newFeedback);
 
                 if (response.IsSuccessStatusCode)
@@ -123,13 +123,11 @@ else
                 else
                 {
                     Console.WriteLine("Failed to submit feedback.");
-                    // Optionally, show an error message to the user
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error submitting feedback: {ex.Message}");
-                // Optionally, show an error message to the user
             }
         }
         else
