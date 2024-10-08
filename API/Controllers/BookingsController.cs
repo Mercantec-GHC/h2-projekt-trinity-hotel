@@ -121,7 +121,7 @@ namespace API.Controllers
         [ProducesResponseType(204)]
         public ActionResult UpdateBooking(Booking booking)
         {
-            if (booking.BookingId <= 0)
+            if (booking.BookingId < 0)
             {
                 return BadRequest("Invalid booking id");
             }
@@ -149,7 +149,7 @@ namespace API.Controllers
                 return BadRequest("Invalid date range");
             }
 
-            if (booking.StartDate < DateTime.Now)
+            if (booking.StartDate < DateTime.Now.Date)
             {
                 return BadRequest("Invalid date range");
             }
